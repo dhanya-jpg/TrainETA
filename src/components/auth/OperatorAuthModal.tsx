@@ -98,7 +98,7 @@ export const OperatorAuthModal: React.FC<OperatorAuthModalProps> = ({
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="trainetaoperator@gmail.com"
+                placeholder="trainoperator@gmail.com"
                 className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs font-semibold text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>

@@ -15,6 +15,32 @@ export interface AuthUser {
   badgeId?: string;
   pnrOrTicket?: string;
   loginTime: string;
+  phone?: string;
+  totalSearches?: number;
+  totalSimulations?: number;
+}
+
+export type ActivityType = 
+  | 'LOGIN' 
+  | 'LOGOUT' 
+  | 'SIGN_UP' 
+  | 'SEARCH_TRAIN' 
+  | 'RUN_SIMULATION' 
+  | 'CREATE_ALERT' 
+  | 'DELETE_ALERT' 
+  | 'VIEW_PREDICTION' 
+  | 'CHANGE_SPEED_RESTRICTION' 
+  | 'EXPORT_REPORT' 
+  | 'SWITCH_ROLE';
+
+export interface UserActivity {
+  id?: string;
+  userId: string;
+  activityType: ActivityType;
+  title: string;
+  details: string;
+  timestamp: string;
+  metadata?: Record<string, any>;
 }
 
 export interface StationStop {

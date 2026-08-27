@@ -18,10 +18,12 @@ import { ReportsView } from './components/reports/ReportsView';
 import { LandingModal } from './components/landing/LandingModal';
 import { LoginPage } from './components/auth/LoginPage';
 import { OperatorAuthModal } from './components/auth/OperatorAuthModal';
+import { UserActivityModal } from './components/activity/UserActivityModal';
 
 import { MOCK_TRAINS, MOCK_ALERTS, MOCK_ANALYTICS } from './data/mockTrains';
 import { TrainData, UserRole, RailwayAlert, AnalyticsSummary, AuthUser } from './types';
 import { recalculateTrainETAs } from './services/etaPredictionService';
+import { logUserActivity, logRecentSearch, logoutFirebase } from './services/firebase';
 
 const STORAGE_KEY = 'smart_eta_auth_user_v2';
 
@@ -65,6 +67,7 @@ export function App() {
   
   // Modals & simulation state
   const [isOperatorAuthModalOpen, setIsOperatorAuthModalOpen] = useState<boolean>(false);
+  const [isActivityModalOpen, setIsActivityModalOpen] = useState<boolean>(false);
   const [isSimulating, setIsSimulating] = useState<boolean>(true);
   const [simSpeed, setSimSpeed] = useState<number>(1);
   const [isLandingModalOpen, setIsLandingModalOpen] = useState<boolean>(false);
@@ -87,7 +90,10 @@ export function App() {
   };
 
   // Handle Logout
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    if (currentUser?.uid) {
+      await logoutFirebase(currentUser.uid);
+    }
     setCurrentUser(null);
     try {
       localStorage.removeItem(STORAGE_KEY);
@@ -102,11 +108,23 @@ export function App() {
       // Operator switching to preview passenger view
       setUserRole('PASSENGER');
       setActiveTab('passenger-view');
+      if (currentUser?.uid) {
+        logUserActivity(currentUser.uid, {
+          activityType: 'SWITCH_ROLE',
+          title: 'Switched View to Passenger Portal',
+          details: 'Switched interface context to Commuter / Passenger Live ETA View.'
+        });
+      }
     } else {
       // In Passenger mode: check if authenticated operator is previewing
       if (currentUser && currentUser.role === 'OPERATOR') {
         setUserRole('OPERATOR');
         setActiveTab('dashboard');
+        logUserActivity(currentUser.uid, {
+          activityType: 'SWITCH_ROLE',
+          title: 'Switched View to Operator Dashboard',
+          details: 'Switched interface context to Chief Train Controller Dashboard.'
+        });
       } else {
         // Authenticated as Passenger: MUST authenticate as Operator first
         setIsOperatorAuthModalOpen(true);
@@ -141,6 +159,14 @@ export function App() {
   // Select train handler
   const handleSelectTrain = (train: TrainData) => {
     setSelectedTrain(train);
+    if (currentUser?.uid) {
+      logRecentSearch(currentUser.uid, {
+        trainNumber: train.trainNumber,
+        trainName: train.trainName,
+        source: train.sourceName,
+        destination: train.destinationName
+      });
+    }
   };
 
   const handleSelectTrainByNumber = (trainNumber: string) => {
@@ -151,6 +177,14 @@ export function App() {
         setActiveTab('dashboard');
       } else {
         setActiveTab('passenger-view');
+      }
+      if (currentUser?.uid) {
+        logRecentSearch(currentUser.uid, {
+          trainNumber: found.trainNumber,
+          trainName: found.trainName,
+          source: found.sourceName,
+          destination: found.destinationName
+        });
       }
     }
   };
@@ -223,6 +257,13 @@ export function App() {
         onVerifySuccess={handleOperatorElevationSuccess}
       />
 
+      {/* User Activity & Audit Trail Modal */}
+      <UserActivityModal
+        isOpen={isActivityModalOpen}
+        onClose={() => setIsActivityModalOpen(false)}
+        currentUser={currentUser}
+      />
+
       {/* Desktop Sidebar */}
       <div className="hidden md:flex shrink-0">
         <Sidebar
@@ -238,9 +279,9 @@ export function App() {
 
       {/* Mobile Drawer Sidebar */}
       {isMobileSidebarOpen && (
-        <div className="fixed inset-0 z-50 md:hidden flex">
+        <div className="fixed inset-0 z-[9999] md:hidden flex">
           <div 
-            className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm"
+            className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm"
             onClick={() => setIsMobileSidebarOpen(false)}
           />
           <div className="relative z-10">
@@ -278,6 +319,7 @@ export function App() {
           onToggleMobileSidebar={() => setIsMobileSidebarOpen(true)}
           currentUser={currentUser}
           onLogout={handleLogout}
+          onOpenActivityModal={() => setIsActivityModalOpen(true)}
         />
 
         {/* Scrollable View Container */}

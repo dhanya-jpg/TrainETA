@@ -14,7 +14,9 @@ import {
   LogOut,
   Shield,
   Ticket,
-  Lock
+  Lock,
+  History,
+  Flame
 } from 'lucide-react';
 import { TrainData, UserRole, AuthUser } from '../../types';
 
@@ -33,6 +35,7 @@ interface TopNavProps {
   onToggleMobileSidebar?: () => void;
   currentUser?: AuthUser | null;
   onLogout?: () => void;
+  onOpenActivityModal?: () => void;
 }
 
 export const TopNav: React.FC<TopNavProps> = ({
@@ -49,7 +52,8 @@ export const TopNav: React.FC<TopNavProps> = ({
   onChangeSimSpeed,
   onToggleMobileSidebar,
   currentUser,
-  onLogout
+  onLogout,
+  onOpenActivityModal
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -213,6 +217,17 @@ export const TopNav: React.FC<TopNavProps> = ({
           )}
         </button>
 
+        {/* User Activity & Audit Trail Trigger */}
+        {onOpenActivityModal && (
+          <button
+            onClick={onOpenActivityModal}
+            className="p-2 rounded-xl text-slate-600 hover:bg-slate-100 hover:text-blue-600 transition-colors cursor-pointer"
+            title="User Activity & Audit Trail"
+          >
+            <History className="w-5 h-5" />
+          </button>
+        )}
+
         {/* User Profile & Logout Popover Trigger */}
         <div className="relative">
           <button
@@ -279,6 +294,19 @@ export const TopNav: React.FC<TopNavProps> = ({
                 </div>
 
                 <div className="pt-2 border-t border-slate-100 flex flex-col gap-2">
+                  {onOpenActivityModal && (
+                    <button
+                      onClick={() => {
+                        setIsProfileOpen(false);
+                        onOpenActivityModal();
+                      }}
+                      className="w-full py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                    >
+                      <History className="w-3.5 h-3.5" />
+                      <span>View Activity Log (Cloud)</span>
+                    </button>
+                  )}
+
                   <button
                     onClick={() => {
                       setIsProfileOpen(false);

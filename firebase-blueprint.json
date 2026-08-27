@@ -1,38 +1,84 @@
 {
   "entities": {
     "UserProfile": {
-      "collection": "users",
-      "fields": {
-        "email": { "type": "string", "required": true },
-        "displayName": { "type": "string", "required": false },
-        "role": { "type": "string", "required": false },
-        "createdAt": { "type": "string", "required": true },
-        "lastLoginAt": { "type": "string", "required": true },
-        "preferredLanguage": { "type": "string", "required": false }
-      }
+      "title": "UserProfile",
+      "description": "Authenticated user profile data",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "description": "User email address" },
+        "displayName": { "type": "string", "description": "User display name" },
+        "role": { "type": "string", "enum": ["OPERATOR", "PASSENGER"], "description": "User access role" },
+        "createdAt": { "type": "string", "description": "Account creation timestamp" },
+        "lastLoginAt": { "type": "string", "description": "Last sign in timestamp" },
+        "preferredLanguage": { "type": "string", "description": "Language preference" },
+        "badgeId": { "type": "string", "description": "Operator badge ID" },
+        "department": { "type": "string", "description": "User railway department" },
+        "phone": { "type": "string", "description": "User contact number" },
+        "totalSearches": { "type": "number", "description": "Total train searches conducted" },
+        "totalSimulations": { "type": "number", "description": "Total what-if simulations run" }
+      },
+      "required": ["email", "role", "createdAt", "lastLoginAt"]
+    },
+    "UserActivity": {
+      "title": "UserActivity",
+      "description": "User interaction and audit activity log",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "ID of user who performed activity" },
+        "activityType": { "type": "string", "description": "Type of event" },
+        "title": { "type": "string", "description": "Short title of action" },
+        "details": { "type": "string", "description": "Detailed description of action" },
+        "timestamp": { "type": "string", "description": "Event timestamp" },
+        "metadata": { "type": "string", "description": "Optional serialized metadata or attributes" }
+      },
+      "required": ["userId", "activityType", "title", "timestamp"]
     },
     "UserAlert": {
-      "collection": "users/{userId}/alerts",
-      "fields": {
-        "trainNumber": { "type": "string", "required": true },
-        "trainName": { "type": "string", "required": true },
-        "stationCode": { "type": "string", "required": true },
-        "stationName": { "type": "string", "required": true },
-        "notifyMinutesBefore": { "type": "number", "required": true },
-        "platformChangeAlert": { "type": "boolean", "required": true },
-        "wakeUpAlarm": { "type": "boolean", "required": true },
-        "createdAt": { "type": "string", "required": true }
-      }
+      "title": "UserAlert",
+      "description": "Saved train ETA and station arrival alerts",
+      "type": "object",
+      "properties": {
+        "trainNumber": { "type": "string", "description": "5-digit train number" },
+        "trainName": { "type": "string", "description": "Official train name" },
+        "stationCode": { "type": "string", "description": "Target station IR code" },
+        "stationName": { "type": "string", "description": "Target station name" },
+        "notifyMinutesBefore": { "type": "number", "description": "Notification lead time in minutes" },
+        "platformChangeAlert": { "type": "boolean", "description": "Platform change notification toggle" },
+        "wakeUpAlarm": { "type": "boolean", "description": "Audio wake up alarm toggle" },
+        "createdAt": { "type": "string", "description": "Alert creation timestamp" }
+      },
+      "required": ["trainNumber", "stationCode", "notifyMinutesBefore", "createdAt"]
     },
     "RecentSearch": {
-      "collection": "users/{userId}/recentSearches",
-      "fields": {
-        "trainNumber": { "type": "string", "required": true },
-        "trainName": { "type": "string", "required": true },
-        "searchedAt": { "type": "string", "required": true },
-        "source": { "type": "string", "required": false },
-        "destination": { "type": "string", "required": false }
-      }
+      "title": "RecentSearch",
+      "description": "Recent train searches by user",
+      "type": "object",
+      "properties": {
+        "trainNumber": { "type": "string", "description": "Train number queried" },
+        "trainName": { "type": "string", "description": "Train name queried" },
+        "searchedAt": { "type": "string", "description": "Query timestamp" },
+        "source": { "type": "string", "description": "Origin station" },
+        "destination": { "type": "string", "description": "Destination station" }
+      },
+      "required": ["trainNumber", "searchedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Stores individual user profiles"
+    },
+    "/users/{userId}/activities/{activityId}": {
+      "schema": { "$ref": "#/entities/UserActivity" },
+      "description": "Audit trail and activity log for each user"
+    },
+    "/users/{userId}/alerts/{alertId}": {
+      "schema": { "$ref": "#/entities/UserAlert" },
+      "description": "User train notification alerts"
+    },
+    "/users/{userId}/recentSearches/{searchId}": {
+      "schema": { "$ref": "#/entities/RecentSearch" },
+      "description": "Recent train searches performed by user"
     }
   }
 }
