@@ -12,14 +12,13 @@ import {
   BarChart3, 
   FileText, 
   UserCheck,
-  Train,
   Radio,
-  Sparkles,
   ChevronRight,
   LogOut,
   Shield,
   User,
-  Lock
+  Lock,
+  ArrowUpRight
 } from 'lucide-react';
 import { UserRole, AuthUser } from '../../types';
 
@@ -73,50 +72,48 @@ export const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   const passengerNavItems: { id: NavigationTab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
-    { id: 'passenger-view', label: 'Passenger Quick ETA', icon: UserCheck },
-    { id: 'live-map', label: 'Live Train Map', icon: Map },
-    { id: 'search', label: 'Search Train', icon: Search },
-    { id: 'alerts', label: 'Travel Alerts', icon: ShieldAlert },
+    { id: 'passenger-view', label: 'Passenger Portal', icon: UserCheck },
+    { id: 'live-map', label: 'Live Map', icon: Map },
+    { id: 'search', label: 'Train Search', icon: Search },
+    { id: 'alerts', label: 'Alerts', icon: ShieldAlert },
   ];
 
   const navItems = userRole === 'OPERATOR' ? operatorNavItems : passengerNavItems;
 
   return (
-    <aside className="w-64 bg-[#0A192F] text-slate-300 flex flex-col h-screen border-r border-slate-800 shrink-0 select-none">
+    <aside className="w-72 bg-[#F8F7F4] text-[#18181A] flex flex-col h-screen border-r border-black/10 shrink-0 select-none font-sans">
       {/* Brand Header */}
-      <div className="p-5 border-b border-slate-800/80 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/20 border border-blue-400/30">
-          <Train className="w-6 h-6" />
-        </div>
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="font-extrabold text-white text-lg tracking-tight">SMART ETA</span>
-            <span className="text-[10px] font-black uppercase px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30 font-mono">
-              DYNAMIC ML
-            </span>
+      <div className="p-6 pb-4 border-b border-black/5 flex flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <div className="font-['Space_Mono',monospace] font-bold text-xl tracking-tight flex items-center gap-1.5 text-[#18181A]">
+            <span className="text-[#E53E3E] font-black tracking-normal">//</span>
+            <span>SMART ETA</span>
           </div>
-          <p className="text-[11px] text-slate-400 font-medium">
-            Dynamic ETA & Delay Intelligence
-          </p>
+          <span className="font-['Space_Mono',monospace] text-[9px] uppercase tracking-widest px-2 py-0.5 rounded bg-black/5 text-[#18181A] font-bold border border-black/10">
+            {userRole === 'OPERATOR' ? 'SECTION CTRL' : 'LIVE TELEMETRY'}
+          </span>
         </div>
+        <p className="font-['Space_Mono',monospace] text-[10px] uppercase tracking-wider text-black/50 font-semibold">
+          AI-Powered Dynamic Train ETA
+        </p>
       </div>
 
       {/* Role Pill Switcher */}
-      <div className="px-4 pt-4 pb-2">
-        <div className="bg-slate-800/60 p-1 rounded-xl border border-slate-700/60 flex items-center text-xs">
+      <div className="px-5 pt-4 pb-2">
+        <div className="bg-white p-1 rounded-xl border border-black/10 shadow-2xs flex items-center text-xs">
           <button
             onClick={() => {
               if (userRole !== 'OPERATOR') {
                 onToggleRole();
               }
             }}
-            className={`flex-1 py-1.5 px-2 rounded-lg font-bold transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer ${
+            className={`flex-1 py-1.5 px-2 rounded-lg font-['Space_Mono',monospace] text-[11px] uppercase tracking-wider font-bold transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer ${
               userRole === 'OPERATOR'
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-[#18181A] text-white shadow-xs'
+                : 'text-black/50 hover:text-black hover:bg-black/5'
             }`}
           >
-            {userRole === 'PASSENGER' && <Lock className="w-3 h-3 text-amber-400" />}
+            {userRole === 'PASSENGER' && <Lock className="w-3 h-3 text-amber-500" />}
             <span>Operator</span>
           </button>
           <button
@@ -125,21 +122,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 onToggleRole();
               }
             }}
-            className={`flex-1 py-1.5 px-2 rounded-lg font-bold transition-all text-center cursor-pointer ${
+            className={`flex-1 py-1.5 px-2 rounded-lg font-['Space_Mono',monospace] text-[11px] uppercase tracking-wider font-bold transition-all text-center cursor-pointer ${
               userRole === 'PASSENGER'
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-[#18181A] text-white shadow-xs'
+                : 'text-black/50 hover:text-black hover:bg-black/5'
             }`}
           >
-            Passenger
+            <span>Passenger</span>
           </button>
         </div>
       </div>
 
       {/* Navigation Links */}
-      <div className="flex-1 overflow-y-auto px-3 py-2 space-y-1 custom-scrollbar">
-        <div className="px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-slate-400">
-          {userRole === 'OPERATOR' ? 'Control Modules' : 'Commuter Tools'}
+      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-1.5 custom-scrollbar">
+        <div className="px-3 py-1 font-['Space_Mono',monospace] text-[10px] uppercase tracking-widest text-black/40 font-bold">
+          {userRole === 'OPERATOR' ? 'CONTROL MODULES' : 'PORTAL NAVIGATION'}
         </div>
 
         {navItems.map((item) => {
@@ -149,28 +146,32 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               key={item.id}
               onClick={() => onSelectTab(item.id)}
-              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all group cursor-pointer ${
+              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-widest transition-all group cursor-pointer border ${
                 isActive
-                  ? 'bg-blue-600 text-white shadow-md shadow-blue-900/30'
-                  : 'text-slate-300 hover:bg-slate-800/70 hover:text-white'
+                  ? 'bg-white text-[#E53E3E] font-bold border-black/10 shadow-xs'
+                  : 'text-black/70 hover:text-[#18181A] hover:bg-black/5 border-transparent'
               }`}
             >
               <div className="flex items-center gap-3">
-                <Icon className={`w-4 h-4 transition-colors ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-blue-400'}`} />
-                <span>{item.label}</span>
+                <Icon className={`w-4 h-4 transition-colors ${isActive ? 'text-[#E53E3E]' : 'text-black/40 group-hover:text-black/70'}`} />
+                <span className="font-['Inter',sans-serif] tracking-wider text-[11.5px]">{item.label}</span>
               </div>
               
               <div className="flex items-center gap-1.5">
                 {'badge' in item && item.badge && (
-                  <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${
+                  <span className={`font-['Space_Mono',monospace] text-[9px] font-bold px-1.5 py-0.5 rounded ${
                     typeof item.badge === 'number'
-                      ? 'bg-red-500 text-white'
-                      : isActive ? 'bg-blue-500 text-white' : 'bg-slate-800 text-blue-300'
+                      ? 'bg-[#E53E3E] text-white'
+                      : isActive ? 'bg-[#E53E3E]/10 text-[#E53E3E]' : 'bg-black/5 text-black/60'
                   }`}>
                     {item.badge}
                   </span>
                 )}
-                {isActive && <ChevronRight className="w-3.5 h-3.5 text-blue-200" />}
+                {isActive ? (
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#E53E3E]" />
+                ) : (
+                  <ChevronRight className="w-3.5 h-3.5 text-black/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+                )}
               </div>
             </button>
           );
@@ -178,20 +179,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* User Session & Logout Footer */}
-      <div className="p-3 border-t border-slate-800 bg-slate-900/80 space-y-2">
-        <div className="flex items-center justify-between p-2 rounded-xl bg-slate-800/60 border border-slate-700/60">
+      <div className="p-4 border-t border-black/10 bg-white/60 space-y-2">
+        <div className="flex items-center justify-between p-2 rounded-xl bg-white border border-black/10 shadow-2xs">
           <div className="flex items-center gap-2.5 overflow-hidden">
             <div className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs text-white shrink-0 ${
-              userRole === 'OPERATOR' ? 'bg-blue-600' : 'bg-emerald-600'
+              userRole === 'OPERATOR' ? 'bg-[#18181A]' : 'bg-[#E53E3E]'
             }`}>
               {userRole === 'OPERATOR' ? <Shield className="w-3.5 h-3.5" /> : <User className="w-3.5 h-3.5" />}
             </div>
             <div className="overflow-hidden">
-              <div className="text-[11px] font-black text-white truncate">
-                {currentUser?.name || (userRole === 'OPERATOR' ? 'Chief Controller' : 'Passenger')}
+              <div className="text-[11px] font-bold text-[#18181A] truncate">
+                {currentUser?.name || (userRole === 'OPERATOR' ? 'Section Controller' : 'Passenger')}
               </div>
-              <div className="text-[10px] text-slate-400 font-mono truncate">
-                {currentUser?.email || (userRole === 'OPERATOR' ? 'trainetaoperator@gmail.com' : 'passenger@smarteta.in')}
+              <div className="text-[10px] text-black/50 font-['Space_Mono',monospace] truncate">
+                {currentUser?.email || (userRole === 'OPERATOR' ? 'trainoperator@gmail.com' : 'passenger@smarteta.in')}
               </div>
             </div>
           </div>
@@ -199,7 +200,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {onLogout && (
             <button
               onClick={onLogout}
-              className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-slate-700/60 rounded-lg transition-colors cursor-pointer"
+              className="p-1.5 text-black/40 hover:text-[#E53E3E] hover:bg-black/5 rounded-lg transition-colors cursor-pointer"
               title="Sign Out"
             >
               <LogOut className="w-4 h-4" />

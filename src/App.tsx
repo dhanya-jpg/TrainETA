@@ -242,7 +242,7 @@ export function App() {
   const unreadAlertsCount = alerts.filter((a) => !a.isAcknowledged).length;
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-slate-100 font-sans text-slate-900 antialiased">
+    <div className="flex h-screen w-screen overflow-hidden bg-[#F8F7F4] font-sans text-[#18181A] antialiased">
       {/* Landing / System Overview Modal */}
       <LandingModal
         isOpen={isLandingModalOpen}

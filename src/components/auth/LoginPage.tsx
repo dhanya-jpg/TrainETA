@@ -15,8 +15,9 @@ import {
   LogIn,
   Phone,
   Ticket,
+  KeyRound,
   Flame,
-  KeyRound
+  ArrowUpRight
 } from 'lucide-react';
 import { AuthUser, UserRole } from '../../types';
 import { signInUser, signUpUser, signInWithGoogle } from '../../services/firebase';
@@ -51,7 +52,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     setSelectedRole(role);
     setErrorMessage(null);
     setSuccessMessage(null);
-    // If switching to operator while on signup mode, automatically switch to signin mode
     if (role === 'OPERATOR' && authMode === 'signup') {
       setAuthMode('signin');
     }
@@ -75,7 +75,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     setErrorMessage(null);
   };
 
-  // Handle Form Submit (Sign In or Sign Up)
+  // Handle Form Submit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
@@ -104,7 +104,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         return;
       }
       if (cleanPassword.length < 6) {
-        setErrorMessage('Password must be at least 6 characters for Firebase security.');
+        setErrorMessage('Password must be at least 6 characters.');
         return;
       }
       if (cleanPassword !== confirmPassword.trim()) {
@@ -125,7 +125,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({
           setErrorMessage(res.error || 'Authentication failed. Please check your credentials.');
         }
       } else {
-        // Sign Up (Passenger only)
         const res = await signUpUser(
           cleanEmail,
           cleanPassword,
@@ -138,7 +137,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         );
         setIsSubmitting(false);
         if (res.success && res.user) {
-          setSuccessMessage('Account registered successfully! Redirecting...');
+          setSuccessMessage('Account created successfully! Redirecting...');
           setTimeout(() => {
             if (res.user) onLoginSuccess(res.user);
           }, 600);
@@ -161,177 +160,161 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     if (res.success && res.user) {
       onLoginSuccess(res.user);
     } else {
-      setErrorMessage(res.error || 'Google Sign-in failed or was cancelled.');
+      setErrorMessage(res.error || 'Google Sign-in was cancelled or encountered an error.');
     }
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#070D18] text-slate-100 flex flex-col justify-between selection:bg-blue-600 selection:text-white relative overflow-x-hidden font-sans">
-      {/* Background Ambient Glows */}
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-emerald-600/10 rounded-full blur-3xl pointer-events-none" />
-
+    <div className="min-h-screen w-full bg-[#F8F7F4] text-[#18181A] flex flex-col justify-between selection:bg-[#E53E3E] selection:text-[#F8F7F4] relative font-sans">
+      
       {/* Top Header Bar */}
-      <header className="w-full border-b border-slate-800/80 bg-slate-950/60 backdrop-blur-md px-6 py-4 flex items-center justify-between z-10">
+      <header className="w-full border-b border-black/10 bg-[#F8F7F4] px-6 sm:px-10 py-5 flex items-center justify-between z-10">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-600/30 border border-blue-400/30">
-            <Train className="w-5 h-5" />
+          <div className="font-['Space_Mono',monospace] font-bold text-xl tracking-tight flex items-center gap-1.5 text-[#18181A]">
+            <span className="text-[#E53E3E] font-black tracking-normal">//</span>
+            <span>SMART ETA</span>
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-extrabold text-white text-lg tracking-tight">SMART ETA</span>
-              <span className="text-[10px] font-mono font-black uppercase px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">
-                FIREBASE CLOUD
-              </span>
-            </div>
-            <p className="text-xs text-slate-400 font-medium">
-              Indian Railways Dynamic Train ETA & Delay Intelligence
-            </p>
-          </div>
+          <span className="hidden sm:inline-block font-['Space_Mono',monospace] text-[9px] uppercase tracking-widest px-2 py-0.5 rounded bg-black/5 text-[#18181A] font-bold border border-black/10">
+            PLATFORM AUTH
+          </span>
         </div>
 
-        <div className="hidden sm:flex items-center gap-3 text-xs">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold font-mono">
-            <Flame className="w-3.5 h-3.5 text-amber-400" />
-            FIREBASE CONNECTED (smart-eta-9966c)
+        <div className="flex items-center gap-3">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white border border-black/10 text-xs font-['Space_Mono',monospace] font-bold shadow-2xs">
+            <span className="w-2 h-2 rounded-full bg-[#E53E3E] animate-pulse" />
+            <span className="text-black/60">FIRESTORE:</span>
+            <span className="text-[#18181A]">CONNECTED</span>
           </span>
         </div>
       </header>
 
       {/* Main Authentication Container */}
-      <main className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8 z-10">
-        <div className="w-full max-w-xl bg-slate-900/90 border border-slate-800 rounded-3xl shadow-2xl p-6 sm:p-8 backdrop-blur-xl relative">
+      <main className="flex-1 flex items-center justify-center p-4 sm:p-8 z-10 my-4">
+        <div className="w-full max-w-lg bg-white border border-black/10 rounded-2xl shadow-2xs p-6 sm:p-9 relative space-y-6">
           
-          {/* Sign In vs Sign Up Tab Toggle */}
-          <div className="flex items-center justify-center p-1 bg-slate-950/90 rounded-2xl border border-slate-800/90 mb-5">
-            <button
-              type="button"
-              onClick={() => {
-                setAuthMode('signin');
-                setErrorMessage(null);
-                setSuccessMessage(null);
-              }}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-                authMode === 'signin'
-                  ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <LogIn className="w-4 h-4" />
-              <span>Sign In</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                // If operator is active, auto switch to passenger for sign up
-                if (selectedRole === 'OPERATOR') {
-                  setSelectedRole('PASSENGER');
-                }
-                setAuthMode('signup');
-                setErrorMessage(null);
-                setSuccessMessage(null);
-              }}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-                authMode === 'signup'
-                  ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <UserPlus className="w-4 h-4" />
-              <span>Create Account</span>
-            </button>
+          {/* Header & Meta */}
+          <div>
+            <div className="font-['Space_Mono',monospace] text-[10px] uppercase tracking-widest text-black/40 font-bold mb-1">
+              AUTHENTICATION & ACCESS
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[#18181A] leading-tight">
+              {selectedRole === 'OPERATOR' 
+                ? 'Operator Portal.' 
+                : (authMode === 'signin' ? 'Welcome Back.' : 'Create Account.')}
+            </h1>
+            <p className="text-xs text-black/60 font-medium mt-1">
+              {selectedRole === 'OPERATOR'
+                ? 'Authorized railway section controller credentials required.'
+                : (authMode === 'signin'
+                    ? 'Authenticate to access real-time train ETA, telemetry & delay models.'
+                    : 'Register for live trip tracking, saved journeys, and delay alerts.')}
+            </p>
           </div>
 
-          {/* Role Switcher */}
-          <div className="grid grid-cols-2 p-1 bg-slate-950/60 rounded-xl border border-slate-800/80 mb-5">
+          {/* Role Switcher Pill */}
+          <div className="bg-[#F8F7F4] p-1 rounded-xl border border-black/10 flex items-center text-xs">
             <button
               type="button"
               onClick={() => handleSelectRole('PASSENGER')}
-              className={`flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
+              className={`flex-1 py-2 px-3 rounded-lg font-['Space_Mono',monospace] text-[11px] uppercase tracking-wider font-bold transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer ${
                 selectedRole === 'PASSENGER'
-                  ? 'bg-slate-800 text-emerald-400 border border-emerald-500/30'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-[#18181A] text-white shadow-xs'
+                  : 'text-black/50 hover:text-black hover:bg-black/5'
               }`}
             >
               <User className="w-3.5 h-3.5" />
-              <span>Passenger Portal</span>
+              <span>Passenger</span>
             </button>
 
             <button
               type="button"
               onClick={() => handleSelectRole('OPERATOR')}
-              className={`flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
+              className={`flex-1 py-2 px-3 rounded-lg font-['Space_Mono',monospace] text-[11px] uppercase tracking-wider font-bold transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer ${
                 selectedRole === 'OPERATOR'
-                  ? 'bg-slate-800 text-blue-400 border border-blue-500/30'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-[#18181A] text-white shadow-xs'
+                  : 'text-black/50 hover:text-black hover:bg-black/5'
               }`}
             >
               <Radio className="w-3.5 h-3.5" />
-              <span>Operator Portal</span>
-              <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-blue-500/20 text-blue-300">Sign-in Only</span>
+              <span>Operator</span>
+              <span className="text-[9px] font-['Space_Mono',monospace] px-1.5 py-0.2 rounded bg-white/10 text-white/80">
+                Official
+              </span>
             </button>
           </div>
 
-          {/* Heading */}
-          <div className="mb-4">
-            <h2 className="text-lg sm:text-xl font-extrabold text-white tracking-tight flex items-center gap-2">
-              {selectedRole === 'OPERATOR' ? (
-                <Shield className="w-5 h-5 text-blue-400" />
-              ) : (
-                <User className="w-5 h-5 text-emerald-400" />
-              )}
-              <span>
-                {selectedRole === 'OPERATOR' 
-                  ? 'Railway Operator Control Room Sign In' 
-                  : (authMode === 'signin' ? 'Sign In to Commuter Portal' : 'Register for Commuter Portal')}
-              </span>
-            </h2>
-            <p className="text-xs text-slate-400 font-medium mt-0.5">
-              {selectedRole === 'OPERATOR'
-                ? 'Authorized Railway Section Controller credentials required (trainoperator@gmail.com).'
-                : (authMode === 'signin'
-                    ? 'Authenticate to access real-time telemetry, live train ETA predictions, and saved alerts.'
-                    : 'Create your passenger account to store train alerts, favorites, and live trip tracking.')}
-            </p>
-          </div>
+          {/* Sign In vs Sign Up Tab Toggle (Passenger Only) */}
+          {selectedRole === 'PASSENGER' && (
+            <div className="flex items-center justify-center gap-4 border-b border-black/5 pb-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthMode('signin');
+                  setErrorMessage(null);
+                  setSuccessMessage(null);
+                }}
+                className={`font-['Space_Mono',monospace] text-xs uppercase tracking-widest font-bold pb-1 cursor-pointer transition-colors border-b-2 ${
+                  authMode === 'signin'
+                    ? 'text-[#E53E3E] border-[#E53E3E]'
+                    : 'text-black/40 border-transparent hover:text-black'
+                }`}
+              >
+                Sign In
+              </button>
 
-          {/* Notice when on Operator Portal */}
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthMode('signup');
+                  setErrorMessage(null);
+                  setSuccessMessage(null);
+                }}
+                className={`font-['Space_Mono',monospace] text-xs uppercase tracking-widest font-bold pb-1 cursor-pointer transition-colors border-b-2 ${
+                  authMode === 'signup'
+                    ? 'text-[#E53E3E] border-[#E53E3E]'
+                    : 'text-black/40 border-transparent hover:text-black'
+                }`}
+              >
+                New Registration
+              </button>
+            </div>
+          )}
+
+          {/* Operator Notice */}
           {selectedRole === 'OPERATOR' && (
-            <div className="mb-4 p-3 rounded-xl bg-blue-950/40 border border-blue-800/50 text-blue-200 text-xs flex items-center gap-2.5">
-              <KeyRound className="w-4 h-4 text-blue-400 shrink-0" />
-              <div className="leading-snug">
-                <span><strong>Operator Portal is Sign-In Only:</strong> Registration is restricted to authorized personnel. Sign up is disabled for operators.</span>
-              </div>
+            <div className="p-3.5 rounded-xl bg-[#F8F7F4] border border-black/10 text-[#18181A] text-xs flex items-center gap-3">
+              <KeyRound className="w-4 h-4 text-[#E53E3E] shrink-0" />
+              <span className="font-medium leading-relaxed">
+                <strong>Sign-in Only:</strong> Operator registration is restricted to designated Indian Railways Section Controllers.
+              </span>
             </div>
           )}
 
           {/* Error Message */}
           {errorMessage && (
-            <div className="mb-4 p-3 rounded-xl bg-red-950/70 border border-red-800/80 text-red-200 text-xs font-bold flex items-center gap-2.5 animate-shake">
-              <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+            <div className="p-3.5 rounded-xl bg-[#E53E3E]/10 border border-[#E53E3E]/20 text-[#E53E3E] text-xs font-bold flex items-center gap-2.5">
+              <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{errorMessage}</span>
             </div>
           )}
 
           {/* Success Message */}
           {successMessage && (
-            <div className="mb-4 p-3 rounded-xl bg-emerald-950/70 border border-emerald-800/80 text-emerald-200 text-xs font-bold flex items-center gap-2.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2.5">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
               <span>{successMessage}</span>
             </div>
           )}
 
-          {/* Google Sign-in Option for Passenger Portal */}
+          {/* Google Sign-in Option for Passenger */}
           {selectedRole === 'PASSENGER' && (
-            <div className="mb-4">
+            <div>
               <button
                 type="button"
                 onClick={handleGoogleLogin}
                 disabled={isGoogleSubmitting || isSubmitting}
-                className="w-full py-2.5 px-4 bg-white hover:bg-slate-100 text-slate-900 font-bold text-xs sm:text-sm rounded-xl transition-all shadow-md flex items-center justify-center gap-3 cursor-pointer disabled:opacity-50 border border-slate-200"
+                className="w-full py-2.5 px-4 bg-white hover:bg-[#F8F7F4] text-[#18181A] font-bold text-xs rounded-xl transition-all shadow-2xs flex items-center justify-center gap-3 cursor-pointer disabled:opacity-50 border border-black/10 font-['Space_Mono',monospace] uppercase tracking-wider"
               >
-                {/* Official Google SVG Icon */}
                 <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
                   <path
                     fill="#4285F4"
@@ -352,87 +335,87 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 </svg>
                 <span>
                   {isGoogleSubmitting
-                    ? 'Connecting with Google...'
+                    ? 'Authenticating...'
                     : authMode === 'signin'
-                    ? 'Sign in with Google'
+                    ? 'Continue with Google'
                     : 'Sign up with Google'}
                 </span>
               </button>
 
-              <div className="relative flex py-3 items-center">
-                <div className="flex-grow border-t border-slate-800"></div>
-                <span className="flex-shrink mx-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                  Or continue with email
+              <div className="relative flex py-4 items-center">
+                <div className="flex-grow border-t border-black/10"></div>
+                <span className="flex-shrink mx-3 text-[10px] font-['Space_Mono',monospace] font-bold text-black/40 uppercase tracking-widest">
+                  Or with email
                 </span>
-                <div className="flex-grow border-t border-slate-800"></div>
+                <div className="flex-grow border-t border-black/10"></div>
               </div>
             </div>
           )}
 
-          {/* Main Form */}
-          <form onSubmit={handleSubmit} className="space-y-3.5">
-            {/* Full Name (Sign Up only - Passenger) */}
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Full Name for Signup */}
             {authMode === 'signup' && selectedRole === 'PASSENGER' && (
               <div>
-                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                <label className="font-['Space_Mono',monospace] text-[10px] font-bold text-black/50 uppercase tracking-widest block mb-1">
                   Full Name
                 </label>
                 <div className="relative">
-                  <User className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <User className="w-4 h-4 text-black/40 absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="e.g. Aarav Sharma"
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-950/90 border border-slate-700/80 rounded-xl text-xs sm:text-sm font-semibold text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    className="w-full pl-10 pr-4 py-2.5 bg-[#F8F7F4] border border-black/10 focus:border-[#E53E3E] rounded-xl text-xs font-bold text-[#18181A] placeholder:text-black/40 focus:outline-none transition-all"
                   />
                 </div>
               </div>
             )}
 
-            {/* Email Field */}
+            {/* Email */}
             <div>
-              <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+              <label className="font-['Space_Mono',monospace] text-[10px] font-bold text-black/50 uppercase tracking-widest block mb-1">
                 {selectedRole === 'OPERATOR' ? 'Operator Email' : 'Email Address'}
               </label>
               <div className="relative">
-                <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <Mail className="w-4 h-4 text-black/40 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder={selectedRole === 'OPERATOR' ? 'trainoperator@gmail.com' : 'passenger@smarteta.in'}
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-950/90 border border-slate-700/80 rounded-xl text-xs sm:text-sm font-semibold text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  className="w-full pl-10 pr-4 py-2.5 bg-[#F8F7F4] border border-black/10 focus:border-[#E53E3E] rounded-xl text-xs font-bold text-[#18181A] placeholder:text-black/40 focus:outline-none transition-all"
                 />
               </div>
             </div>
 
-            {/* Password Field */}
+            {/* Password */}
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
-                  {selectedRole === 'OPERATOR' ? 'Operator Password' : 'Password'}
+                <label className="font-['Space_Mono',monospace] text-[10px] font-bold text-black/50 uppercase tracking-widest block">
+                  {selectedRole === 'OPERATOR' ? 'Password' : 'Password'}
                 </label>
                 {authMode === 'signup' && (
-                  <span className="text-[10px] text-slate-500 font-mono">Min 6 characters</span>
+                  <span className="font-['Space_Mono',monospace] text-[9px] text-black/40">Min 6 chars</span>
                 )}
               </div>
               <div className="relative">
-                <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <Lock className="w-4 h-4 text-black/40 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full pl-10 pr-10 py-2.5 bg-slate-950/90 border border-slate-700/80 rounded-xl text-xs sm:text-sm font-semibold text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-mono"
+                  className="w-full pl-10 pr-10 py-2.5 bg-[#F8F7F4] border border-black/10 focus:border-[#E53E3E] rounded-xl text-xs font-bold text-[#18181A] placeholder:text-black/40 focus:outline-none transition-all font-mono"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 cursor-pointer"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-black/40 hover:text-black cursor-pointer"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -442,54 +425,54 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             {/* Confirm Password (Sign Up only) */}
             {authMode === 'signup' && selectedRole === 'PASSENGER' && (
               <div>
-                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                <label className="font-['Space_Mono',monospace] text-[10px] font-bold text-black/50 uppercase tracking-widest block mb-1">
                   Confirm Password
                 </label>
                 <div className="relative">
-                  <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <Lock className="w-4 h-4 text-black/40 absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <input
                     type={showPassword ? 'text' : 'password'}
                     required
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-950/90 border border-slate-700/80 rounded-xl text-xs sm:text-sm font-semibold text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-mono"
+                    className="w-full pl-10 pr-4 py-2.5 bg-[#F8F7F4] border border-black/10 focus:border-[#E53E3E] rounded-xl text-xs font-bold text-[#18181A] placeholder:text-black/40 focus:outline-none transition-all font-mono"
                   />
                 </div>
               </div>
             )}
 
-            {/* Additional Fields for Passenger Sign Up */}
+            {/* Optional Fields (Signup) */}
             {authMode === 'signup' && selectedRole === 'PASSENGER' && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                 <div>
-                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
-                    Phone / Contact (Optional)
+                  <label className="font-['Space_Mono',monospace] text-[10px] font-bold text-black/50 uppercase tracking-widest block mb-1">
+                    Phone (Optional)
                   </label>
                   <div className="relative">
-                    <Phone className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <Phone className="w-3.5 h-3.5 text-black/40 absolute left-3 top-1/2 -translate-y-1/2" />
                     <input
                       type="tel"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       placeholder="+91 98765 43210"
-                      className="w-full pl-9 pr-3 py-2 bg-slate-950/90 border border-slate-700/80 rounded-xl text-xs font-semibold text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full pl-9 pr-3 py-2 bg-[#F8F7F4] border border-black/10 rounded-xl text-xs font-bold text-[#18181A] focus:outline-none focus:border-[#E53E3E]"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                  <label className="font-['Space_Mono',monospace] text-[10px] font-bold text-black/50 uppercase tracking-widest block mb-1">
                     PNR / Ticket (Optional)
                   </label>
                   <div className="relative">
-                    <Ticket className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <Ticket className="w-3.5 h-3.5 text-black/40 absolute left-3 top-1/2 -translate-y-1/2" />
                     <input
                       type="text"
                       value={pnrOrTicket}
                       onChange={(e) => setPnrOrTicket(e.target.value)}
                       placeholder="e.g. 4829103948"
-                      className="w-full pl-9 pr-3 py-2 bg-slate-950/90 border border-slate-700/80 rounded-xl text-xs font-semibold text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full pl-9 pr-3 py-2 bg-[#F8F7F4] border border-black/10 rounded-xl text-xs font-bold text-[#18181A] focus:outline-none focus:border-[#E53E3E]"
                     />
                   </div>
                 </div>
@@ -501,96 +484,59 @@ export const LoginPage: React.FC<LoginPageProps> = ({
               <button
                 type="submit"
                 disabled={isSubmitting || isGoogleSubmitting}
-                className={`w-full py-3 text-white font-extrabold text-xs sm:text-sm rounded-xl uppercase tracking-wider transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 ${
-                  selectedRole === 'OPERATOR'
-                    ? 'bg-blue-600 hover:bg-blue-500 shadow-blue-600/30'
-                    : 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/30'
-                }`}
+                className="w-full py-3 bg-[#18181A] hover:bg-black text-white font-['Space_Mono',monospace] font-bold text-xs uppercase tracking-widest rounded-xl transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
                 {isSubmitting ? (
-                  <span>Processing Authentication...</span>
+                  <span>AUTHENTICATING...</span>
                 ) : (
                   <>
                     <span>
                       {selectedRole === 'OPERATOR' 
-                        ? 'Authenticate Operator' 
-                        : (authMode === 'signin' ? 'Sign In & Access' : 'Create Commuter Account')}
+                        ? 'ENTER OPERATOR PORTAL' 
+                        : (authMode === 'signin' ? 'SIGN IN' : 'COMPLETE REGISTRATION')}
                     </span>
-                    <ArrowRight className="w-4 h-4" />
+                    <ArrowRight className="w-4 h-4 text-[#E53E3E]" />
                   </>
                 )}
               </button>
             </div>
           </form>
 
-          {/* Quick Demo Credentials Autofill */}
-          <div className="mt-4 pt-3 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
-            <span className="font-semibold text-[11px]">Quick Credentials:</span>
+          {/* Quick Demo Autofill Chips */}
+          <div className="pt-3 border-t border-black/5 flex flex-wrap items-center justify-between gap-2 text-xs">
+            <span className="font-['Space_Mono',monospace] text-[10px] uppercase tracking-wider text-black/40 font-bold">
+              QUICK ACCESS:
+            </span>
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={autofillPassenger}
-                className="px-2.5 py-1 rounded-lg bg-emerald-950/50 hover:bg-emerald-900/50 text-emerald-300 border border-emerald-800/50 font-bold text-[11px] transition-colors cursor-pointer"
+                className="px-2.5 py-1 rounded-lg bg-[#F8F7F4] hover:bg-black/5 text-[#18181A] border border-black/10 font-['Space_Mono',monospace] font-bold text-[10px] uppercase transition-colors cursor-pointer"
               >
                 Passenger Demo
               </button>
               <button
                 type="button"
                 onClick={autofillOperator}
-                className="px-2.5 py-1 rounded-lg bg-blue-950/50 hover:bg-blue-900/50 text-blue-300 border border-blue-800/50 font-bold text-[11px] transition-colors cursor-pointer"
+                className="px-2.5 py-1 rounded-lg bg-[#18181A] text-white hover:bg-black border border-[#18181A] font-['Space_Mono',monospace] font-bold text-[10px] uppercase transition-colors cursor-pointer"
               >
-                Operator (Official)
+                Operator Official
               </button>
             </div>
           </div>
-
-          {/* Toggle between Sign In & Sign Up Prompt (Passenger Only) */}
-          {selectedRole === 'PASSENGER' && (
-            <div className="mt-3 text-center text-xs text-slate-400">
-              {authMode === 'signin' ? (
-                <p>
-                  Don't have an account yet?{' '}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAuthMode('signup');
-                      setErrorMessage(null);
-                    }}
-                    className="font-bold text-emerald-400 hover:text-emerald-300 underline cursor-pointer"
-                  >
-                    Create one now
-                  </button>
-                </p>
-              ) : (
-                <p>
-                  Already have an account?{' '}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAuthMode('signin');
-                      setErrorMessage(null);
-                    }}
-                    className="font-bold text-blue-400 hover:text-blue-300 underline cursor-pointer"
-                  >
-                    Sign In here
-                  </button>
-                </p>
-              )}
-            </div>
-          )}
 
         </div>
       </main>
 
       {/* Footer System Telemetry Status */}
-      <footer className="w-full border-t border-slate-800/80 bg-slate-950/80 px-6 py-3 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-400 z-10">
-        <div className="flex items-center gap-3">
-          <span>Western Railway Mumbai Division</span>
+      <footer className="w-full border-t border-black/10 bg-[#F8F7F4] px-6 sm:px-10 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-black/50 z-10">
+        <div className="flex items-center gap-2 font-medium">
+          <span>Western Railway Division</span>
           <span>•</span>
-          <span>Firebase Project: <strong className="text-slate-300 font-mono">smart-eta-9966c</strong></span>
+          <span className="font-['Space_Mono',monospace] text-[11px]">PROJECT: smart-eta-9966c</span>
         </div>
-        <div className="flex items-center gap-2 font-mono text-[11px] text-slate-400">
-          <span>SECURE FIRESTORE PERSISTENCE ENABLED</span>
+        <div className="font-['Space_Mono',monospace] text-[10px] uppercase tracking-wider font-bold text-black/40">
+          SECURE FIRESTORE PERSISTENCE ENABLED
         </div>
       </footer>
     </div>
