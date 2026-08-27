@@ -86,7 +86,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className="p-6 pb-4 border-b border-black/5 flex flex-col gap-2">
         <div className="flex items-center justify-between">
           <div className="font-['Space_Mono',monospace] font-bold text-xl tracking-tight flex items-center gap-1.5 text-[#18181A]">
-            <span className="text-[#E53E3E] font-black tracking-normal">//</span>
             <span>SMART ETA</span>
           </div>
           <span className="font-['Space_Mono',monospace] text-[9px] uppercase tracking-widest px-2 py-0.5 rounded bg-black/5 text-[#18181A] font-bold border border-black/10">

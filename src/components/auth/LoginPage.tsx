@@ -171,7 +171,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       <header className="w-full border-b border-black/10 bg-[#F8F7F4] px-6 sm:px-10 py-5 flex items-center justify-between z-10">
         <div className="flex items-center gap-3">
           <div className="font-['Space_Mono',monospace] font-bold text-xl tracking-tight flex items-center gap-1.5 text-[#18181A]">
-            <span className="text-[#E53E3E] font-black tracking-normal">//</span>
             <span>SMART ETA</span>
           </div>
           <span className="hidden sm:inline-block font-['Space_Mono',monospace] text-[9px] uppercase tracking-widest px-2 py-0.5 rounded bg-black/5 text-[#18181A] font-bold border border-black/10">
