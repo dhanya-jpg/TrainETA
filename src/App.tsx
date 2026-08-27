@@ -242,7 +242,7 @@ export function App() {
   const unreadAlertsCount = alerts.filter((a) => !a.isAcknowledged).length;
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#F8F7F4] font-sans text-[#18181A] antialiased">
+    <div className="flex h-[100dvh] w-full overflow-hidden bg-[#F8F7F4] dark:bg-[#111113] font-sans text-[#18181A] dark:text-[#f2f2f2] antialiased">
       {/* Landing / System Overview Modal */}
       <LandingModal
         isOpen={isLandingModalOpen}
@@ -265,7 +265,7 @@ export function App() {
       />
 
       {/* Desktop Sidebar */}
-      <div className="hidden md:flex shrink-0">
+      <div className="hidden lg:flex shrink-0">
         <Sidebar
           activeTab={activeTab}
           onSelectTab={handleSelectTab}
@@ -277,9 +277,9 @@ export function App() {
         />
       </div>
 
-      {/* Mobile Drawer Sidebar */}
+      {/* Mobile & Tablet Drawer Sidebar */}
       {isMobileSidebarOpen && (
-        <div className="fixed inset-0 z-[9999] md:hidden flex">
+        <div className="fixed inset-0 z-[9999] lg:hidden flex">
           <div 
             className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm"
             onClick={() => setIsMobileSidebarOpen(false)}
@@ -302,7 +302,7 @@ export function App() {
       )}
 
       {/* Main App Content Area */}
-      <div className="flex-1 flex flex-col h-screen overflow-hidden">
+      <div className="flex-1 flex flex-col h-[100dvh] overflow-hidden min-w-0">
         {/* Top Navbar */}
         <TopNav
           trains={trains}
@@ -323,7 +323,7 @@ export function App() {
         />
 
         {/* Scrollable View Container */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 custom-scrollbar">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-5 lg:p-8 space-y-4 sm:space-y-6 custom-scrollbar min-w-0">
           {/* TAB: Dashboard (Operator) */}
           {activeTab === 'dashboard' && userRole === 'OPERATOR' && (
             <div className="space-y-6">
@@ -345,13 +345,13 @@ export function App() {
               />
 
               {/* Interactive Live Map */}
-              <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-xs space-y-3">
+              <div className="bg-white dark:bg-[#1a1a1c] p-4 sm:p-5 rounded-3xl dark:rounded-none border border-slate-200 dark:border-white/10 shadow-xs space-y-3">
                 <div className="flex items-center justify-between px-1">
                   <div>
-                    <h3 className="text-base font-extrabold text-slate-900 tracking-tight">
+                    <h3 className="text-base font-extrabold text-slate-900 dark:text-[#f2f2f2] tracking-tight">
                       Live Telemetry Route Tracking: {selectedTrain.trainNumber}
                     </h3>
-                    <p className="text-xs text-slate-500 font-medium">
+                    <p className="text-xs text-slate-500 dark:text-[#f2f2f2]/50 font-medium">
                       GPS coordinates with animated train position and interactive station waypoints.
                     </p>
                   </div>
@@ -380,7 +380,7 @@ export function App() {
                   onOpenMap={() => {}}
                 />
               )}
-              <div className="h-[calc(100vh-220px)] w-full bg-white p-3 rounded-3xl border border-slate-200 shadow-xs">
+              <div className="h-[calc(100vh-220px)] w-full bg-white dark:bg-[#1a1a1c] p-3 rounded-3xl dark:rounded-none border border-slate-200 dark:border-white/10 shadow-xs">
                 <LiveTrainMap train={selectedTrain} />
               </div>
             </div>

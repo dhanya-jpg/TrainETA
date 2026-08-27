@@ -76,17 +76,17 @@ export const WhatIfSimulationView: React.FC<WhatIfSimulationViewProps> = ({ trai
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white dark:bg-[#1a1a1c] p-6 rounded-2xl dark:rounded-none border border-slate-200 dark:border-white/10 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl dark:rounded-none bg-blue-50 text-blue-600 flex items-center justify-center">
               <Sliders className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-xl font-black text-slate-900 tracking-tight">
+              <h2 className="text-xl font-black text-slate-900 dark:text-[#f2f2f2] tracking-tight">
                 What-If Scenario Simulation Engine
               </h2>
-              <p className="text-xs text-slate-500 font-medium">
+              <p className="text-xs text-slate-500 dark:text-[#f2f2f2]/50 font-medium">
                 Test operational dispatch decisions, speed variations, and priority overrides for Train {train.trainNumber}.
               </p>
             </div>
@@ -97,14 +97,14 @@ export const WhatIfSimulationView: React.FC<WhatIfSimulationViewProps> = ({ trai
         <div className="flex items-center gap-2">
           <button
             onClick={applyPresetPriority}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-extrabold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl dark:rounded-none text-xs font-extrabold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition-colors"
           >
             <Zap className="w-3.5 h-3.5" />
             <span>Apply Green Corridor Preset</span>
           </button>
           <button
             onClick={handleReset}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 border border-slate-200 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl dark:rounded-none text-xs font-bold text-slate-600 dark:text-[#f2f2f2]/70 hover:bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 transition-colors"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             <span>Reset</span>
@@ -114,9 +114,9 @@ export const WhatIfSimulationView: React.FC<WhatIfSimulationViewProps> = ({ trai
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Column: Interactive Simulation Sliders & Selectors (5 Cols) */}
-        <div className="lg:col-span-5 bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-6">
+        <div className="lg:col-span-5 bg-white dark:bg-[#1a1a1c] p-6 rounded-2xl dark:rounded-none border border-slate-200 dark:border-white/10 shadow-xs space-y-6">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <span className="text-xs font-black text-slate-900 uppercase tracking-wider">
+            <span className="text-xs font-black text-slate-900 dark:text-[#f2f2f2] uppercase tracking-wider">
               Control Parameters
             </span>
             <span className="text-[11px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
@@ -127,7 +127,7 @@ export const WhatIfSimulationView: React.FC<WhatIfSimulationViewProps> = ({ trai
           {/* 1. Train Speed Adjustment Slider */}
           <div className="space-y-2">
             <div className="flex items-center justify-between text-xs">
-              <span className="font-extrabold text-slate-800 flex items-center gap-1.5">
+              <span className="font-extrabold text-slate-800 dark:text-[#f2f2f2] flex items-center gap-1.5">
                 <Gauge className="w-4 h-4 text-blue-600" /> Train Speed Adjustment
               </span>
               <span className="font-mono font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
@@ -143,7 +143,7 @@ export const WhatIfSimulationView: React.FC<WhatIfSimulationViewProps> = ({ trai
               onChange={(e) => setParams({ ...params, speedAdjustmentPercent: Number(e.target.value) })}
               className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
             />
-            <div className="flex justify-between text-[10px] text-slate-400 font-bold">
+            <div className="flex justify-between text-[10px] text-slate-400 dark:text-[#f2f2f2]/40 font-bold">
               <span>-20% (Congestion)</span>
               <span>0% (Normal)</span>
               <span>+20% (Full Speed)</span>
@@ -153,7 +153,7 @@ export const WhatIfSimulationView: React.FC<WhatIfSimulationViewProps> = ({ trai
           {/* 2. Station Halt Adjustment Slider */}
           <div className="space-y-2">
             <div className="flex items-center justify-between text-xs">
-              <span className="font-extrabold text-slate-800 flex items-center gap-1.5">
+              <span className="font-extrabold text-slate-800 dark:text-[#f2f2f2] flex items-center gap-1.5">
                 <Clock className="w-4 h-4 text-amber-600" /> Station Halt Variation
               </span>
               <span className="font-mono font-black text-amber-600 bg-amber-50 px-2 py-0.5 rounded">
@@ -169,7 +169,7 @@ export const WhatIfSimulationView: React.FC<WhatIfSimulationViewProps> = ({ trai
               onChange={(e) => setParams({ ...params, stationHaltAdjustmentMinutes: Number(e.target.value) })}
               className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-amber-600"
             />
-            <div className="flex justify-between text-[10px] text-slate-400 font-bold">
+            <div className="flex justify-between text-[10px] text-slate-400 dark:text-[#f2f2f2]/40 font-bold">
               <span>-5 min (Quick)</span>
               <span>0 min</span>
               <span>+10 min (Heavy Load)</span>
@@ -178,7 +178,7 @@ export const WhatIfSimulationView: React.FC<WhatIfSimulationViewProps> = ({ trai
 
           {/* 3. Traffic Level */}
           <div className="space-y-2">
-            <span className="text-xs font-extrabold text-slate-800 block">
+            <span className="text-xs font-extrabold text-slate-800 dark:text-[#f2f2f2] block">
               Section Traffic Density
             </span>
             <div className="grid grid-cols-3 gap-2">
@@ -186,10 +186,10 @@ export const WhatIfSimulationView: React.FC<WhatIfSimulationViewProps> = ({ trai
                 <button
                   key={lvl}
                   onClick={() => setParams({ ...params, trafficCondition: lvl })}
-                  className={`py-2 rounded-xl text-xs font-bold transition-all ${
+                  className={`py-2 rounded-xl dark:rounded-none text-xs font-bold transition-all ${
                     params.trafficCondition === lvl
                       ? 'bg-blue-600 text-white shadow-xs'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-[#f2f2f2]/70 hover:bg-slate-200'
                   }`}
                 >
                   {lvl}
@@ -200,7 +200,7 @@ export const WhatIfSimulationView: React.FC<WhatIfSimulationViewProps> = ({ trai
 
           {/* 4. Track Restriction (TSR) */}
           <div className="space-y-2">
-            <span className="text-xs font-extrabold text-slate-800 block">
+            <span className="text-xs font-extrabold text-slate-800 dark:text-[#f2f2f2] block">
               Track Caution Order (TSR)
             </span>
             <div className="grid grid-cols-2 gap-2">
@@ -211,10 +211,10 @@ export const WhatIfSimulationView: React.FC<WhatIfSimulationViewProps> = ({ trai
                 <button
                   key={t.id}
                   onClick={() => setParams({ ...params, trackRestriction: t.id as any })}
-                  className={`py-2 px-2 text-center rounded-xl text-xs font-bold transition-all ${
+                  className={`py-2 px-2 text-center rounded-xl dark:rounded-none text-xs font-bold transition-all ${
                     params.trackRestriction === t.id
                       ? 'bg-blue-600 text-white shadow-xs'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-[#f2f2f2]/70 hover:bg-slate-200'
                   }`}
                 >
                   {t.label}
@@ -225,7 +225,7 @@ export const WhatIfSimulationView: React.FC<WhatIfSimulationViewProps> = ({ trai
 
           {/* 5. Signal Priority Override */}
           <div className="space-y-2">
-            <span className="text-xs font-extrabold text-slate-800 block">
+            <span className="text-xs font-extrabold text-slate-800 dark:text-[#f2f2f2] block">
               Interlocking Signal Priority
             </span>
             <div className="grid grid-cols-2 gap-2">
@@ -236,10 +236,10 @@ export const WhatIfSimulationView: React.FC<WhatIfSimulationViewProps> = ({ trai
                 <button
                   key={p.id}
                   onClick={() => setParams({ ...params, signalPriority: p.id as any })}
-                  className={`py-2 px-2 text-center rounded-xl text-xs font-bold transition-all ${
+                  className={`py-2 px-2 text-center rounded-xl dark:rounded-none text-xs font-bold transition-all ${
                     params.signalPriority === p.id
                       ? 'bg-emerald-600 text-white shadow-xs'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-[#f2f2f2]/70 hover:bg-slate-200'
                   }`}
                 >
                   {p.label}
@@ -251,7 +251,7 @@ export const WhatIfSimulationView: React.FC<WhatIfSimulationViewProps> = ({ trai
           {/* Action Button: Run Simulation */}
           <button
             onClick={handleRunSimulation}
-            className="w-full py-3.5 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md shadow-blue-600/20 transition-all cursor-pointer"
+            className="w-full py-3.5 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl dark:rounded-none font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-md shadow-blue-600/20 transition-all cursor-pointer"
           >
             <Play className="w-4 h-4 fill-white" />
             <span>Run Scenario Simulation</span>
@@ -261,30 +261,30 @@ export const WhatIfSimulationView: React.FC<WhatIfSimulationViewProps> = ({ trai
         {/* Right Column: Simulation Outcomes & Delta Comparison (7 Cols) */}
         <div className="lg:col-span-7 space-y-6">
           {/* Outcome Metric Highlights Card */}
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-6">
+          <div className="bg-white dark:bg-[#1a1a1c] p-6 rounded-2xl dark:rounded-none border border-slate-200 dark:border-white/10 shadow-xs space-y-6">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <span className="text-xs font-black text-slate-900 uppercase tracking-wider">
+              <span className="text-xs font-black text-slate-900 dark:text-[#f2f2f2] uppercase tracking-wider">
                 Simulated vs Baseline Outcome
               </span>
-              <span className="text-[11px] font-bold text-slate-500">
+              <span className="text-[11px] font-bold text-slate-500 dark:text-[#f2f2f2]/50">
                 Destination: {simulationResult.destinationStation}
               </span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {/* Original ETA */}
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-1">
-                <span className="text-[10px] font-bold uppercase text-slate-400">Original Baseline</span>
-                <div className="text-xl font-black text-slate-900 font-mono">
+              <div className="bg-slate-50 dark:bg-[#141416] p-4 rounded-xl dark:rounded-none border border-slate-200 dark:border-white/10 space-y-1">
+                <span className="text-[10px] font-bold uppercase text-slate-400 dark:text-[#f2f2f2]/40">Original Baseline</span>
+                <div className="text-xl font-black text-slate-900 dark:text-[#f2f2f2] font-mono">
                   {simulationResult.originalETA}
                 </div>
-                <div className="text-xs text-slate-500 font-bold">
+                <div className="text-xs text-slate-500 dark:text-[#f2f2f2]/50 font-bold">
                   Delay: +{simulationResult.originalDelayMinutes} min
                 </div>
               </div>
 
               {/* Simulated ETA */}
-              <div className="bg-blue-50/70 p-4 rounded-xl border border-blue-200 space-y-1">
+              <div className="bg-blue-50/70 p-4 rounded-xl dark:rounded-none border border-blue-200 space-y-1">
                 <span className="text-[10px] font-bold uppercase text-blue-700">Simulated Prediction</span>
                 <div className="text-xl font-black text-blue-700 font-mono">
                   {simulationResult.simulatedETA}
@@ -295,11 +295,11 @@ export const WhatIfSimulationView: React.FC<WhatIfSimulationViewProps> = ({ trai
               </div>
 
               {/* Net Impact */}
-              <div className={`p-4 rounded-xl border space-y-1 ${
+              <div className={`p-4 rounded-xl dark:rounded-none border space-y-1 ${
                 simulationResult.isRecovered
                   ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
                   : simulationResult.netImpactMinutes === 0
-                  ? 'bg-slate-50 border-slate-200 text-slate-900'
+                  ? 'bg-slate-50 dark:bg-[#141416] border-slate-200 dark:border-white/10 text-slate-900 dark:text-[#f2f2f2]'
                   : 'bg-red-50 border-red-200 text-red-900'
               }`}>
                 <span className="text-[10px] font-bold uppercase tracking-wider">Net Impact Delta</span>
@@ -325,19 +325,19 @@ export const WhatIfSimulationView: React.FC<WhatIfSimulationViewProps> = ({ trai
             </div>
 
             {/* Simulation Insight Box */}
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium text-slate-700 flex items-start gap-2.5">
+            <div className="p-4 rounded-xl dark:rounded-none bg-slate-50 dark:bg-[#141416] border border-slate-200 dark:border-white/10 text-xs font-medium text-slate-700 dark:text-[#f2f2f2]/80 flex items-start gap-2.5">
               <Sparkles className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
               <span>{simulationResult.simulationNotes}</span>
             </div>
           </div>
 
           {/* Station-by-Station Comparison Table */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-            <div className="p-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
-              <span className="text-xs font-extrabold text-slate-900 uppercase tracking-wider">
+          <div className="bg-white dark:bg-[#1a1a1c] rounded-2xl dark:rounded-none border border-slate-200 dark:border-white/10 shadow-xs overflow-hidden">
+            <div className="p-4 border-b border-slate-100 bg-slate-50 dark:bg-[#141416] flex items-center justify-between">
+              <span className="text-xs font-extrabold text-slate-900 dark:text-[#f2f2f2] uppercase tracking-wider">
                 Station-by-Station Delta Progression
               </span>
-              <span className="text-[10px] font-bold text-slate-400">
+              <span className="text-[10px] font-bold text-slate-400 dark:text-[#f2f2f2]/40">
                 LIVE TRAJECTORY
               </span>
             </div>
@@ -345,7 +345,7 @@ export const WhatIfSimulationView: React.FC<WhatIfSimulationViewProps> = ({ trai
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead>
-                  <tr className="bg-white border-b border-slate-200 text-slate-400 font-bold uppercase text-[10px]">
+                  <tr className="bg-white dark:bg-[#1a1a1c] border-b border-slate-200 dark:border-white/10 text-slate-400 dark:text-[#f2f2f2]/40 font-bold uppercase text-[10px]">
                     <th className="py-2.5 px-4">Station</th>
                     <th className="py-2.5 px-3">Original ETA</th>
                     <th className="py-2.5 px-3">Simulated ETA</th>
@@ -354,15 +354,15 @@ export const WhatIfSimulationView: React.FC<WhatIfSimulationViewProps> = ({ trai
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium">
                   {simulationResult.stationComparisons.map((c) => (
-                    <tr key={c.stationCode} className="hover:bg-slate-50">
-                      <td className="py-2.5 px-4 font-bold text-slate-900">
-                        {c.stationName} <span className="text-slate-400 font-mono text-[10px]">({c.stationCode})</span>
+                    <tr key={c.stationCode} className="hover:bg-slate-50 dark:bg-[#141416]">
+                      <td className="py-2.5 px-4 font-bold text-slate-900 dark:text-[#f2f2f2]">
+                        {c.stationName} <span className="text-slate-400 dark:text-[#f2f2f2]/40 font-mono text-[10px]">({c.stationCode})</span>
                       </td>
-                      <td className="py-2.5 px-3 font-mono text-slate-600">{c.originalETA}</td>
+                      <td className="py-2.5 px-3 font-mono text-slate-600 dark:text-[#f2f2f2]/70">{c.originalETA}</td>
                       <td className="py-2.5 px-3 font-mono font-bold text-blue-600">{c.simulatedETA}</td>
                       <td className="py-2.5 px-3 text-right font-mono font-bold">
                         {c.deltaMinutes === 0 ? (
-                          <span className="text-slate-400">0m</span>
+                          <span className="text-slate-400 dark:text-[#f2f2f2]/40">0m</span>
                         ) : c.deltaMinutes < 0 ? (
                           <span className="text-emerald-600">{c.deltaMinutes}m</span>
                         ) : (

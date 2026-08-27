@@ -222,7 +222,7 @@ export const LiveTrainMap: React.FC<LiveTrainMapProps> = ({ train, onSelectStati
             ${badgeLabel}
           </div>
           <!-- Clean floating label on hover only to prevent clutter -->
-          <div class="absolute bottom-full mb-1.5 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-150 bg-slate-900/95 text-white text-[11px] font-bold px-2.5 py-1 rounded-md shadow-xl whitespace-nowrap border border-slate-700/80 z-50">
+          <div class="absolute bottom-full mb-1.5 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-150 bg-slate-900 dark:bg-white/95 text-white text-[11px] font-bold px-2.5 py-1 rounded-md shadow-xl whitespace-nowrap border border-slate-700/80 z-50">
             <span class="text-blue-400">${stop.stationCode}</span> • ${stop.stationName}
           </div>
         </div>
@@ -458,12 +458,12 @@ export const LiveTrainMap: React.FC<LiveTrainMapProps> = ({ train, onSelectStati
   };
 
   return (
-    <div className="relative isolate w-full h-full min-h-[460px] bg-slate-100 rounded-3xl overflow-hidden border border-slate-200/80 shadow-md flex flex-col">
+    <div className="relative isolate w-full h-full min-h-[460px] bg-slate-100 dark:bg-white/5 rounded-3xl dark:rounded-none overflow-hidden border border-slate-200 dark:border-white/10/80 shadow-md flex flex-col">
       
       {/* TOP FLOATING HUD (Telemetry & Delay Summary) */}
       <div className="absolute top-3 left-3 right-3 z-10 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
         {/* Telemetry pill */}
-        <div className="bg-slate-900/90 backdrop-blur-md text-white px-3.5 py-2 rounded-2xl shadow-xl border border-slate-700/60 pointer-events-auto flex items-center gap-3 text-xs font-semibold">
+        <div className="bg-slate-900 dark:bg-white/90 backdrop-blur-md text-white px-3.5 py-2 rounded-2xl dark:rounded-none shadow-xl border border-slate-700/60 pointer-events-auto flex items-center gap-3 text-xs font-semibold">
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
             <span className="font-mono text-emerald-400 font-extrabold uppercase tracking-wide">LIVE GPS</span>
@@ -483,7 +483,7 @@ export const LiveTrainMap: React.FC<LiveTrainMapProps> = ({ train, onSelectStati
         </div>
 
         {/* Legend / Status badges */}
-        <div className="hidden sm:flex items-center gap-2.5 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-xl shadow-md border border-slate-200 pointer-events-auto text-[11px] font-bold text-slate-700">
+        <div className="hidden sm:flex items-center gap-2.5 bg-white dark:bg-[#1a1a1c]/95 backdrop-blur-md px-3 py-1.5 rounded-xl dark:rounded-none shadow-md border border-slate-200 dark:border-white/10 pointer-events-auto text-[11px] font-bold text-slate-700 dark:text-[#f2f2f2]/80">
           <div className="flex items-center gap-1">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-600"></span>
             <span>Passed</span>
@@ -497,7 +497,7 @@ export const LiveTrainMap: React.FC<LiveTrainMapProps> = ({ train, onSelectStati
             <span>Upcoming</span>
           </div>
           {userLocation && (
-            <div className="flex items-center gap-1 text-blue-700 pl-1 border-l border-slate-200">
+            <div className="flex items-center gap-1 text-blue-700 pl-1 border-l border-slate-200 dark:border-white/10">
               <span className="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
               <span>You</span>
             </div>
@@ -511,7 +511,7 @@ export const LiveTrainMap: React.FC<LiveTrainMapProps> = ({ train, onSelectStati
           type="button"
           onClick={handleFocusTrain}
           title="Focus on Train"
-          className="w-9 h-9 rounded-xl bg-white/95 hover:bg-slate-50 text-slate-700 hover:text-blue-600 shadow-md border border-slate-200 flex items-center justify-center cursor-pointer transition-transform hover:scale-105 active:scale-95"
+          className="w-9 h-9 rounded-xl dark:rounded-none bg-white dark:bg-[#1a1a1c]/95 hover:bg-slate-50 dark:bg-[#141416] text-slate-700 dark:text-[#f2f2f2]/80 hover:text-blue-600 shadow-md border border-slate-200 dark:border-white/10 flex items-center justify-center cursor-pointer transition-transform hover:scale-105 active:scale-95"
         >
           <TrainIcon className="w-4 h-4 text-blue-600" />
         </button>
@@ -520,10 +520,10 @@ export const LiveTrainMap: React.FC<LiveTrainMapProps> = ({ train, onSelectStati
           type="button"
           onClick={handleLocateUser}
           title={userLocation ? 'Focus on My GPS Location' : 'Detect My Location'}
-          className={`w-9 h-9 rounded-xl shadow-md border flex items-center justify-center cursor-pointer transition-transform hover:scale-105 active:scale-95 ${
+          className={`w-9 h-9 rounded-xl dark:rounded-none shadow-md border flex items-center justify-center cursor-pointer transition-transform hover:scale-105 active:scale-95 ${
             userLocation 
               ? 'bg-blue-600 text-white border-blue-700' 
-              : 'bg-white/95 hover:bg-slate-50 text-slate-700 hover:text-blue-600 border-slate-200'
+              : 'bg-white dark:bg-[#1a1a1c]/95 hover:bg-slate-50 dark:bg-[#141416] text-slate-700 dark:text-[#f2f2f2]/80 hover:text-blue-600 border-slate-200 dark:border-white/10'
           }`}
         >
           <LocateFixed className={`w-4 h-4 ${isLocating ? 'animate-spin' : ''}`} />
@@ -533,7 +533,7 @@ export const LiveTrainMap: React.FC<LiveTrainMapProps> = ({ train, onSelectStati
           type="button"
           onClick={handleFitRoute}
           title="Fit Full Route"
-          className="w-9 h-9 rounded-xl bg-white/95 hover:bg-slate-50 text-slate-700 hover:text-blue-600 shadow-md border border-slate-200 flex items-center justify-center cursor-pointer transition-transform hover:scale-105 active:scale-95"
+          className="w-9 h-9 rounded-xl dark:rounded-none bg-white dark:bg-[#1a1a1c]/95 hover:bg-slate-50 dark:bg-[#141416] text-slate-700 dark:text-[#f2f2f2]/80 hover:text-blue-600 shadow-md border border-slate-200 dark:border-white/10 flex items-center justify-center cursor-pointer transition-transform hover:scale-105 active:scale-95"
         >
           <Maximize2 className="w-4 h-4" />
         </button>
@@ -549,7 +549,7 @@ export const LiveTrainMap: React.FC<LiveTrainMapProps> = ({ train, onSelectStati
       <div className="bg-slate-950 text-white px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs z-10 border-t border-slate-800">
         <div className="flex items-center gap-2">
           <MapPin className="w-4 h-4 text-blue-400 shrink-0" />
-          <span className="text-slate-400">Current Section:</span>
+          <span className="text-slate-400 dark:text-[#f2f2f2]/40">Current Section:</span>
           <span className="font-bold text-slate-100 truncate max-w-xs">{train.currentLocationName}</span>
         </div>
 

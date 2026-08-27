@@ -165,43 +165,43 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#F8F7F4] text-[#18181A] flex flex-col justify-between selection:bg-[#E53E3E] selection:text-[#F8F7F4] relative font-sans">
+    <div className="min-h-[100dvh] w-full bg-[#F8F7F4] dark:bg-[#111113] text-[#18181A] dark:text-[#f2f2f2] flex flex-col justify-between selection:bg-[#E53E3E] selection:text-white relative font-['Inter',sans-serif]">
       
       {/* Top Header Bar */}
-      <header className="w-full border-b border-black/10 bg-[#F8F7F4] px-6 sm:px-10 py-5 flex items-center justify-between z-10">
+      <header className="w-full border-b border-black/10 dark:border-white/10 bg-[#F8F7F4] dark:bg-[#111113] px-6 sm:px-10 py-5 flex items-center justify-between z-10">
         <div className="flex items-center gap-3">
-          <div className="font-['Space_Mono',monospace] font-bold text-xl tracking-tight flex items-center gap-1.5 text-[#18181A]">
+          <div className="font-['Space_Mono',monospace] dark:font-['Syne',sans-serif] font-extrabold text-xl tracking-tight flex items-center gap-1.5 text-[#18181A] dark:text-[#f2f2f2]">
             <span>SMART ETA</span>
           </div>
-          <span className="hidden sm:inline-block font-['Space_Mono',monospace] text-[9px] uppercase tracking-widest px-2 py-0.5 rounded bg-black/5 text-[#18181A] font-bold border border-black/10">
+          <span className="hidden sm:inline-block font-['Space_Mono',monospace] dark:font-['JetBrains_Mono',monospace] text-[9px] uppercase tracking-widest px-2 py-0.5 rounded bg-white dark:bg-[#1a1a1c]/5 text-[#18181A] dark:text-[#f2f2f2] font-bold border border-black/10 dark:border-white/10">
             PLATFORM AUTH
           </span>
         </div>
 
         <div className="flex items-center gap-3">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white border border-black/10 text-xs font-['Space_Mono',monospace] font-bold shadow-2xs">
-            <span className="w-2 h-2 rounded-full bg-[#E53E3E] animate-pulse" />
-            <span className="text-black/60">FIRESTORE:</span>
-            <span className="text-[#18181A]">CONNECTED</span>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-sm bg-white dark:bg-[#1a1a1c] border border-black/10 dark:border-white/10 text-xs font-['Space_Mono',monospace] dark:font-['JetBrains_Mono',monospace] font-bold shadow-sm">
+            <span className="w-2 h-2 rounded-xl dark:rounded-none bg-[#E53E3E] animate-pulse" />
+            <span className="text-black/50 dark:text-black/50 dark:text-white/50">FIRESTORE:</span>
+            <span className="text-[#18181A] dark:text-[#f2f2f2]">CONNECTED</span>
           </span>
         </div>
       </header>
 
       {/* Main Authentication Container */}
       <main className="flex-1 flex items-center justify-center p-4 sm:p-8 z-10 my-4">
-        <div className="w-full max-w-lg bg-white border border-black/10 rounded-2xl shadow-2xs p-6 sm:p-9 relative space-y-6">
+        <div className="w-full max-w-lg bg-white dark:bg-[#1a1a1c] border border-black/10 dark:border-white/10 rounded-xl dark:rounded-none p-6 sm:p-9 relative space-y-6">
           
           {/* Header & Meta */}
           <div>
-            <div className="font-['Space_Mono',monospace] text-[10px] uppercase tracking-widest text-black/40 font-bold mb-1">
+            <div className="font-['Space_Mono',monospace] dark:font-['JetBrains_Mono',monospace] text-[10px] uppercase tracking-widest text-black/50 dark:text-black/50 dark:text-white/50 font-bold mb-1">
               AUTHENTICATION & ACCESS
             </div>
-            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[#18181A] leading-tight">
+            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight font-['Space_Mono',monospace] dark:font-['Syne',sans-serif] text-[#18181A] dark:text-[#f2f2f2] leading-tight uppercase">
               {selectedRole === 'OPERATOR' 
                 ? 'Operator Portal.' 
                 : (authMode === 'signin' ? 'Welcome Back.' : 'Create Account.')}
             </h1>
-            <p className="text-xs text-black/60 font-medium mt-1">
+            <p className="text-xs text-black/60 dark:text-white/60 font-medium mt-2">
               {selectedRole === 'OPERATOR'
                 ? 'Authorized railway section controller credentials required.'
                 : (authMode === 'signin'
@@ -211,14 +211,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({
           </div>
 
           {/* Role Switcher Pill */}
-          <div className="bg-[#F8F7F4] p-1 rounded-xl border border-black/10 flex items-center text-xs">
+          <div className="bg-[#F8F7F4] dark:bg-[#141416] p-1 rounded-xl dark:rounded-none border border-black/10 dark:border-white/10 flex items-center text-xs">
             <button
               type="button"
               onClick={() => handleSelectRole('PASSENGER')}
-              className={`flex-1 py-2 px-3 rounded-lg font-['Space_Mono',monospace] text-[11px] uppercase tracking-wider font-bold transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer ${
+              className={`flex-1 py-2 px-3 rounded-xl dark:rounded-none font-['Space_Mono',monospace] dark:font-['JetBrains_Mono',monospace] text-[11px] uppercase tracking-wider font-bold transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer ${
                 selectedRole === 'PASSENGER'
-                  ? 'bg-[#18181A] text-white shadow-xs'
-                  : 'text-black/50 hover:text-black hover:bg-black/5'
+                  ? 'bg-[#E53E3E] text-black dark:text-white'
+                  : 'text-black/50 dark:text-black/50 dark:text-white/50 hover:text-black dark:text-white hover:bg-black/5 dark:hover:bg-white dark:bg-[#1a1a1c]/5'
               }`}
             >
               <User className="w-3.5 h-3.5" />
@@ -228,15 +228,15 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             <button
               type="button"
               onClick={() => handleSelectRole('OPERATOR')}
-              className={`flex-1 py-2 px-3 rounded-lg font-['Space_Mono',monospace] text-[11px] uppercase tracking-wider font-bold transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer ${
+              className={`flex-1 py-2 px-3 rounded-xl dark:rounded-none font-['Space_Mono',monospace] dark:font-['JetBrains_Mono',monospace] text-[11px] uppercase tracking-wider font-bold transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer ${
                 selectedRole === 'OPERATOR'
-                  ? 'bg-[#18181A] text-white shadow-xs'
-                  : 'text-black/50 hover:text-black hover:bg-black/5'
+                  ? 'bg-[#E53E3E] text-black dark:text-white'
+                  : 'text-black/50 dark:text-black/50 dark:text-white/50 hover:text-black dark:text-white hover:bg-black/5 dark:hover:bg-white dark:bg-[#1a1a1c]/5'
               }`}
             >
               <Radio className="w-3.5 h-3.5" />
               <span>Operator</span>
-              <span className="text-[9px] font-['Space_Mono',monospace] px-1.5 py-0.2 rounded bg-white/10 text-white/80">
+              <span className="text-[9px] font-['Space_Mono',monospace] dark:font-['JetBrains_Mono',monospace] px-1.5 py-0.5 bg-black/20 text-black/90 dark:text-white/90 ml-1">
                 Official
               </span>
             </button>
@@ -244,7 +244,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
           {/* Sign In vs Sign Up Tab Toggle (Passenger Only) */}
           {selectedRole === 'PASSENGER' && (
-            <div className="flex items-center justify-center gap-4 border-b border-black/5 pb-3">
+            <div className="flex items-center justify-center gap-4 border-b border-black/10 dark:border-white/10 pb-3">
               <button
                 type="button"
                 onClick={() => {
@@ -252,10 +252,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   setErrorMessage(null);
                   setSuccessMessage(null);
                 }}
-                className={`font-['Space_Mono',monospace] text-xs uppercase tracking-widest font-bold pb-1 cursor-pointer transition-colors border-b-2 ${
+                className={`font-['Space_Mono',monospace] dark:font-['JetBrains_Mono',monospace] text-xs uppercase tracking-widest font-bold pb-1 cursor-pointer transition-colors border-b-2 ${
                   authMode === 'signin'
                     ? 'text-[#E53E3E] border-[#E53E3E]'
-                    : 'text-black/40 border-transparent hover:text-black'
+                    : 'text-black/40 dark:text-black/40 dark:text-white/40 border-transparent hover:text-black dark:text-white'
                 }`}
               >
                 Sign In
@@ -268,10 +268,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   setErrorMessage(null);
                   setSuccessMessage(null);
                 }}
-                className={`font-['Space_Mono',monospace] text-xs uppercase tracking-widest font-bold pb-1 cursor-pointer transition-colors border-b-2 ${
+                className={`font-['Space_Mono',monospace] dark:font-['JetBrains_Mono',monospace] text-xs uppercase tracking-widest font-bold pb-1 cursor-pointer transition-colors border-b-2 ${
                   authMode === 'signup'
                     ? 'text-[#E53E3E] border-[#E53E3E]'
-                    : 'text-black/40 border-transparent hover:text-black'
+                    : 'text-black/40 dark:text-black/40 dark:text-white/40 border-transparent hover:text-black dark:text-white'
                 }`}
               >
                 New Registration
@@ -281,7 +281,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
           {/* Operator Notice */}
           {selectedRole === 'OPERATOR' && (
-            <div className="p-3.5 rounded-xl bg-[#F8F7F4] border border-black/10 text-[#18181A] text-xs flex items-center gap-3">
+            <div className="p-3.5 bg-[#F8F7F4] dark:bg-[#141416] border border-black/10 dark:border-white/10 text-black/90 dark:text-white/90 text-xs flex items-center gap-3">
               <KeyRound className="w-4 h-4 text-[#E53E3E] shrink-0" />
               <span className="font-medium leading-relaxed">
                 <strong>Sign-in Only:</strong> Operator registration is restricted to designated Indian Railways Section Controllers.
@@ -291,7 +291,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
           {/* Error Message */}
           {errorMessage && (
-            <div className="p-3.5 rounded-xl bg-[#E53E3E]/10 border border-[#E53E3E]/20 text-[#E53E3E] text-xs font-bold flex items-center gap-2.5">
+            <div className="p-3.5 bg-[#E53E3E]/10 border border-[#E53E3E]/30 text-[#E53E3E] text-xs font-bold flex items-center gap-2.5">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{errorMessage}</span>
             </div>
@@ -299,8 +299,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
           {/* Success Message */}
           {successMessage && (
-            <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <div className="p-3.5 bg-emerald-900/20 border border-emerald-500/30 text-emerald-400 text-xs font-bold flex items-center gap-2.5">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
               <span>{successMessage}</span>
             </div>
           )}
@@ -312,7 +312,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 type="button"
                 onClick={handleGoogleLogin}
                 disabled={isGoogleSubmitting || isSubmitting}
-                className="w-full py-2.5 px-4 bg-white hover:bg-[#F8F7F4] text-[#18181A] font-bold text-xs rounded-xl transition-all shadow-2xs flex items-center justify-center gap-3 cursor-pointer disabled:opacity-50 border border-black/10 font-['Space_Mono',monospace] uppercase tracking-wider"
+                className="w-full py-2.5 px-4 bg-[#f2f2f2] hover:bg-white dark:bg-[#1a1a1c] text-[#111113] font-bold text-xs transition-all shadow-none flex items-center justify-center gap-3 cursor-pointer disabled:opacity-50 border-none font-['Space_Mono',monospace] dark:font-['JetBrains_Mono',monospace] uppercase tracking-wider"
               >
                 <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
                   <path
@@ -342,11 +342,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({
               </button>
 
               <div className="relative flex py-4 items-center">
-                <div className="flex-grow border-t border-black/10"></div>
-                <span className="flex-shrink mx-3 text-[10px] font-['Space_Mono',monospace] font-bold text-black/40 uppercase tracking-widest">
+                <div className="flex-grow border-t border-black/10 dark:border-white/10"></div>
+                <span className="flex-shrink mx-3 text-[10px] font-['Space_Mono',monospace] dark:font-['JetBrains_Mono',monospace] font-bold text-black/40 dark:text-black/40 dark:text-white/40 uppercase tracking-widest">
                   Or with email
                 </span>
-                <div className="flex-grow border-t border-black/10"></div>
+                <div className="flex-grow border-t border-black/10 dark:border-white/10"></div>
               </div>
             </div>
           )}
@@ -356,18 +356,18 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             {/* Full Name for Signup */}
             {authMode === 'signup' && selectedRole === 'PASSENGER' && (
               <div>
-                <label className="font-['Space_Mono',monospace] text-[10px] font-bold text-black/50 uppercase tracking-widest block mb-1">
+                <label className="font-['Space_Mono',monospace] dark:font-['JetBrains_Mono',monospace] text-[10px] font-bold text-black/50 dark:text-black/50 dark:text-white/50 uppercase tracking-widest block mb-1">
                   Full Name
                 </label>
                 <div className="relative">
-                  <User className="w-4 h-4 text-black/40 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <User className="w-4 h-4 text-black/40 dark:text-black/40 dark:text-white/40 absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="e.g. Aarav Sharma"
-                    className="w-full pl-10 pr-4 py-2.5 bg-[#F8F7F4] border border-black/10 focus:border-[#E53E3E] rounded-xl text-xs font-bold text-[#18181A] placeholder:text-black/40 focus:outline-none transition-all"
+                    className="w-full pl-10 pr-4 py-2.5 bg-[#F8F7F4] dark:bg-[#111113] border border-black/10 dark:border-white/10 focus:border-[#E53E3E] rounded-xl dark:rounded-none text-xs font-bold text-[#18181A] dark:text-[#f2f2f2] placeholder:text-black/40 dark:placeholder:text-black dark:text-white/30 focus:outline-none transition-colors"
                   />
                 </div>
               </div>
@@ -375,18 +375,18 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
             {/* Email */}
             <div>
-              <label className="font-['Space_Mono',monospace] text-[10px] font-bold text-black/50 uppercase tracking-widest block mb-1">
+              <label className="font-['Space_Mono',monospace] dark:font-['JetBrains_Mono',monospace] text-[10px] font-bold text-black/50 dark:text-black/50 dark:text-white/50 uppercase tracking-widest block mb-1">
                 {selectedRole === 'OPERATOR' ? 'Operator Email' : 'Email Address'}
               </label>
               <div className="relative">
-                <Mail className="w-4 h-4 text-black/40 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <Mail className="w-4 h-4 text-black/40 dark:text-black/40 dark:text-white/40 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder={selectedRole === 'OPERATOR' ? 'trainoperator@gmail.com' : 'passenger@smarteta.in'}
-                  className="w-full pl-10 pr-4 py-2.5 bg-[#F8F7F4] border border-black/10 focus:border-[#E53E3E] rounded-xl text-xs font-bold text-[#18181A] placeholder:text-black/40 focus:outline-none transition-all"
+                  className="w-full pl-10 pr-4 py-2.5 bg-[#F8F7F4] dark:bg-[#111113] border border-black/10 dark:border-white/10 focus:border-[#E53E3E] rounded-xl dark:rounded-none text-xs font-bold text-[#18181A] dark:text-[#f2f2f2] placeholder:text-black/40 dark:placeholder:text-black dark:text-white/30 focus:outline-none transition-colors"
                 />
               </div>
             </div>
@@ -394,27 +394,27 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             {/* Password */}
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="font-['Space_Mono',monospace] text-[10px] font-bold text-black/50 uppercase tracking-widest block">
+                <label className="font-['Space_Mono',monospace] dark:font-['JetBrains_Mono',monospace] text-[10px] font-bold text-black/50 dark:text-black/50 dark:text-white/50 uppercase tracking-widest block">
                   {selectedRole === 'OPERATOR' ? 'Password' : 'Password'}
                 </label>
                 {authMode === 'signup' && (
-                  <span className="font-['Space_Mono',monospace] text-[9px] text-black/40">Min 6 chars</span>
+                  <span className="font-['Space_Mono',monospace] dark:font-['JetBrains_Mono',monospace] text-[9px] text-black/40 dark:text-black/40 dark:text-white/40">Min 6 chars</span>
                 )}
               </div>
               <div className="relative">
-                <Lock className="w-4 h-4 text-black/40 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <Lock className="w-4 h-4 text-black/40 dark:text-black/40 dark:text-white/40 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full pl-10 pr-10 py-2.5 bg-[#F8F7F4] border border-black/10 focus:border-[#E53E3E] rounded-xl text-xs font-bold text-[#18181A] placeholder:text-black/40 focus:outline-none transition-all font-mono"
+                  className="w-full pl-10 pr-10 py-2.5 bg-[#F8F7F4] dark:bg-[#111113] border border-black/10 dark:border-white/10 focus:border-[#E53E3E] rounded-xl dark:rounded-none text-xs font-bold text-[#18181A] dark:text-[#f2f2f2] placeholder:text-black/40 dark:placeholder:text-black dark:text-white/30 focus:outline-none transition-colors font-['Space_Mono',monospace] dark:font-['JetBrains_Mono',monospace]"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-black/40 hover:text-black cursor-pointer"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-black/40 dark:text-black/40 dark:text-white/40 hover:text-black dark:text-white cursor-pointer"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -424,18 +424,18 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             {/* Confirm Password (Sign Up only) */}
             {authMode === 'signup' && selectedRole === 'PASSENGER' && (
               <div>
-                <label className="font-['Space_Mono',monospace] text-[10px] font-bold text-black/50 uppercase tracking-widest block mb-1">
+                <label className="font-['Space_Mono',monospace] dark:font-['JetBrains_Mono',monospace] text-[10px] font-bold text-black/50 dark:text-black/50 dark:text-white/50 uppercase tracking-widest block mb-1">
                   Confirm Password
                 </label>
                 <div className="relative">
-                  <Lock className="w-4 h-4 text-black/40 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <Lock className="w-4 h-4 text-black/40 dark:text-black/40 dark:text-white/40 absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <input
                     type={showPassword ? 'text' : 'password'}
                     required
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full pl-10 pr-4 py-2.5 bg-[#F8F7F4] border border-black/10 focus:border-[#E53E3E] rounded-xl text-xs font-bold text-[#18181A] placeholder:text-black/40 focus:outline-none transition-all font-mono"
+                    className="w-full pl-10 pr-4 py-2.5 bg-[#F8F7F4] dark:bg-[#111113] border border-black/10 dark:border-white/10 focus:border-[#E53E3E] rounded-xl dark:rounded-none text-xs font-bold text-[#18181A] dark:text-[#f2f2f2] placeholder:text-black/40 dark:placeholder:text-black dark:text-white/30 focus:outline-none transition-colors font-['Space_Mono',monospace] dark:font-['JetBrains_Mono',monospace]"
                   />
                 </div>
               </div>
@@ -445,33 +445,33 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             {authMode === 'signup' && selectedRole === 'PASSENGER' && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                 <div>
-                  <label className="font-['Space_Mono',monospace] text-[10px] font-bold text-black/50 uppercase tracking-widest block mb-1">
+                  <label className="font-['Space_Mono',monospace] dark:font-['JetBrains_Mono',monospace] text-[10px] font-bold text-black/50 dark:text-black/50 dark:text-white/50 uppercase tracking-widest block mb-1">
                     Phone (Optional)
                   </label>
                   <div className="relative">
-                    <Phone className="w-3.5 h-3.5 text-black/40 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <Phone className="w-3.5 h-3.5 text-black/40 dark:text-black/40 dark:text-white/40 absolute left-3 top-1/2 -translate-y-1/2" />
                     <input
                       type="tel"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       placeholder="+91 98765 43210"
-                      className="w-full pl-9 pr-3 py-2 bg-[#F8F7F4] border border-black/10 rounded-xl text-xs font-bold text-[#18181A] focus:outline-none focus:border-[#E53E3E]"
+                      className="w-full pl-9 pr-3 py-2 bg-[#F8F7F4] dark:bg-[#111113] border border-black/10 dark:border-white/10 rounded-xl dark:rounded-none text-xs font-bold text-[#18181A] dark:text-[#f2f2f2] focus:outline-none focus:border-[#E53E3E] transition-colors"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="font-['Space_Mono',monospace] text-[10px] font-bold text-black/50 uppercase tracking-widest block mb-1">
+                  <label className="font-['Space_Mono',monospace] dark:font-['JetBrains_Mono',monospace] text-[10px] font-bold text-black/50 dark:text-black/50 dark:text-white/50 uppercase tracking-widest block mb-1">
                     PNR / Ticket (Optional)
                   </label>
                   <div className="relative">
-                    <Ticket className="w-3.5 h-3.5 text-black/40 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <Ticket className="w-3.5 h-3.5 text-black/40 dark:text-black/40 dark:text-white/40 absolute left-3 top-1/2 -translate-y-1/2" />
                     <input
                       type="text"
                       value={pnrOrTicket}
                       onChange={(e) => setPnrOrTicket(e.target.value)}
                       placeholder="e.g. 4829103948"
-                      className="w-full pl-9 pr-3 py-2 bg-[#F8F7F4] border border-black/10 rounded-xl text-xs font-bold text-[#18181A] focus:outline-none focus:border-[#E53E3E]"
+                      className="w-full pl-9 pr-3 py-2 bg-[#F8F7F4] dark:bg-[#111113] border border-black/10 dark:border-white/10 rounded-xl dark:rounded-none text-xs font-bold text-[#18181A] dark:text-[#f2f2f2] focus:outline-none focus:border-[#E53E3E] transition-colors"
                     />
                   </div>
                 </div>
@@ -483,7 +483,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
               <button
                 type="submit"
                 disabled={isSubmitting || isGoogleSubmitting}
-                className="w-full py-3 bg-[#18181A] hover:bg-black text-white font-['Space_Mono',monospace] font-bold text-xs uppercase tracking-widest rounded-xl transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                className="w-full py-3 bg-[#E53E3E] hover:bg-red-700 text-black dark:text-white font-['Space_Mono',monospace] dark:font-['JetBrains_Mono',monospace] font-bold text-xs uppercase tracking-widest rounded-xl dark:rounded-none transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 border-none"
               >
                 {isSubmitting ? (
                   <span>AUTHENTICATING...</span>
@@ -494,7 +494,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                         ? 'ENTER OPERATOR PORTAL' 
                         : (authMode === 'signin' ? 'SIGN IN' : 'COMPLETE REGISTRATION')}
                     </span>
-                    <ArrowRight className="w-4 h-4 text-[#E53E3E]" />
+                    <ArrowRight className="w-4 h-4 text-black dark:text-white" />
                   </>
                 )}
               </button>
@@ -502,22 +502,22 @@ export const LoginPage: React.FC<LoginPageProps> = ({
           </form>
 
           {/* Quick Demo Autofill Chips */}
-          <div className="pt-3 border-t border-black/5 flex flex-wrap items-center justify-between gap-2 text-xs">
-            <span className="font-['Space_Mono',monospace] text-[10px] uppercase tracking-wider text-black/40 font-bold">
+          <div className="pt-3 border-t border-black/10 dark:border-white/10 flex flex-wrap items-center justify-between gap-2 text-xs">
+            <span className="font-['Space_Mono',monospace] dark:font-['JetBrains_Mono',monospace] text-[10px] uppercase tracking-wider text-black/40 dark:text-black/40 dark:text-white/40 font-bold">
               QUICK ACCESS:
             </span>
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={autofillPassenger}
-                className="px-2.5 py-1 rounded-lg bg-[#F8F7F4] hover:bg-black/5 text-[#18181A] border border-black/10 font-['Space_Mono',monospace] font-bold text-[10px] uppercase transition-colors cursor-pointer"
+                className="px-2.5 py-1 rounded-xl dark:rounded-none bg-[#F8F7F4] dark:bg-[#111113] hover:bg-black/5 dark:hover:bg-white dark:bg-[#1a1a1c]/5 text-[#18181A] dark:text-[#f2f2f2] border border-black/10 dark:border-white/10 font-['Space_Mono',monospace] dark:font-['JetBrains_Mono',monospace] font-bold text-[10px] uppercase transition-colors cursor-pointer"
               >
                 Passenger Demo
               </button>
               <button
                 type="button"
                 onClick={autofillOperator}
-                className="px-2.5 py-1 rounded-lg bg-[#18181A] text-white hover:bg-black border border-[#18181A] font-['Space_Mono',monospace] font-bold text-[10px] uppercase transition-colors cursor-pointer"
+                className="px-2.5 py-1 rounded-xl dark:rounded-none bg-[#E53E3E] text-black dark:text-white hover:bg-red-700 border-none font-['Space_Mono',monospace] dark:font-['JetBrains_Mono',monospace] font-bold text-[10px] uppercase transition-colors cursor-pointer"
               >
                 Operator Official
               </button>
@@ -528,13 +528,13 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       </main>
 
       {/* Footer System Telemetry Status */}
-      <footer className="w-full border-t border-black/10 bg-[#F8F7F4] px-6 sm:px-10 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-black/50 z-10">
+      <footer className="w-full border-t border-black/10 dark:border-white/10 bg-[#F8F7F4] dark:bg-[#111113] px-6 sm:px-10 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-black/50 dark:text-black/50 dark:text-white/50 z-10">
         <div className="flex items-center gap-2 font-medium">
           <span>Western Railway Division</span>
           <span>•</span>
-          <span className="font-['Space_Mono',monospace] text-[11px]">PROJECT: smart-eta-9966c</span>
+          <span className="font-['Space_Mono',monospace] dark:font-['JetBrains_Mono',monospace] text-[11px] text-black dark:text-white/70">PROJECT: smart-eta-9966c</span>
         </div>
-        <div className="font-['Space_Mono',monospace] text-[10px] uppercase tracking-wider font-bold text-black/40">
+        <div className="font-['Space_Mono',monospace] dark:font-['JetBrains_Mono',monospace] text-[10px] uppercase tracking-wider font-bold text-[#E53E3E]">
           SECURE FIRESTORE PERSISTENCE ENABLED
         </div>
       </footer>

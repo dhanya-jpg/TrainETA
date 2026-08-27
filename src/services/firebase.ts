@@ -297,6 +297,26 @@ export async function signInUser(
         success: false, 
         error: 'Invalid Operator Credentials. Required: trainoperator@gmail.com / eta161739' 
       };
+    } else {
+      // Mock operator user bypassing real firebase auth to avoid "user-not-found" errors
+      const authUser: AuthUser = {
+        uid: 'mock-operator-8492',
+        email: cleanEmail,
+        role: 'OPERATOR',
+        name: 'Chief Train Controller',
+        department: 'Control Office - Western Railway (BCT Division)',
+        badgeId: 'IR-WR-OP-8492',
+        loginTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+      
+      // Log activity to firestore directly without relying on auth.currentUser
+      await logUserActivity(authUser.uid, {
+        activityType: 'LOGIN',
+        title: `Logged in as Chief Section Controller`,
+        details: `Sign-in session initiated from ${cleanEmail} via Official Operator Portal.`
+      });
+
+      return { success: true, user: authUser };
     }
   }
 
@@ -332,7 +352,7 @@ export async function signInUser(
     // Log Activity to Firestore
     await logUserActivity(fbUser.uid, {
       activityType: 'LOGIN',
-      title: `Logged in as ${role === 'OPERATOR' ? 'Chief Section Controller' : 'Commuter'}`,
+      title: `Logged in as ${(role as UserRole) === 'OPERATOR' ? 'Chief Section Controller' : 'Commuter'}`,
       details: `Sign-in session initiated from ${cleanEmail} via Firebase Auth.`
     });
 
@@ -356,9 +376,9 @@ export async function signInUser(
         uid: 'demo-user-' + Math.random().toString(36).substring(2, 8),
         email: cleanEmail,
         role: role,
-        name: role === 'OPERATOR' ? 'Chief Train Controller' : cleanEmail.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
-        department: role === 'OPERATOR' ? 'Control Office - Western Railway (BCT Division)' : 'Commuter / Live Traveler Portal',
-        badgeId: role === 'OPERATOR' ? 'IR-WR-OP-8492' : undefined,
+        name: (role as UserRole) === 'OPERATOR' ? 'Chief Train Controller' : cleanEmail.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+        department: (role as UserRole) === 'OPERATOR' ? 'Control Office - Western Railway (BCT Division)' : 'Commuter / Live Traveler Portal',
+        badgeId: (role as UserRole) === 'OPERATOR' ? 'IR-WR-OP-8492' : undefined,
         loginTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
       return { success: true, user: fallbackUser };

@@ -29,17 +29,17 @@ export const RailwayControlView: React.FC<RailwayControlViewProps> = ({
   return (
     <div className="space-y-6">
       {/* Control Room Top Header */}
-      <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white dark:bg-[#1a1a1c] p-6 rounded-2xl dark:rounded-none border border-slate-200 dark:border-white/10 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl dark:rounded-none bg-blue-50 text-blue-600 flex items-center justify-center">
               <Radio className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-xl font-black text-slate-900 tracking-tight">
+              <h2 className="text-xl font-black text-slate-900 dark:text-[#f2f2f2] tracking-tight">
                 Railway Control Center Operations Grid
               </h2>
-              <p className="text-xs text-slate-500 font-medium">
+              <p className="text-xs text-slate-500 dark:text-[#f2f2f2]/50 font-medium">
                 Multi-train monitoring, section occupancy tracking, and priority conflict resolution.
               </p>
             </div>
@@ -47,10 +47,10 @@ export const RailwayControlView: React.FC<RailwayControlViewProps> = ({
         </div>
 
         <div className="flex items-center gap-3">
-          <span className="text-xs font-bold text-slate-600 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200">
-            Active Fleet: <strong className="text-slate-900">{trains.length} Units</strong>
+          <span className="text-xs font-bold text-slate-600 dark:text-[#f2f2f2]/70 bg-slate-100 dark:bg-white/5 px-3 py-1.5 rounded-xl dark:rounded-none border border-slate-200 dark:border-white/10">
+            Active Fleet: <strong className="text-slate-900 dark:text-[#f2f2f2]">{trains.length} Units</strong>
           </span>
-          <span className="text-xs font-bold text-amber-700 bg-amber-50 px-3 py-1.5 rounded-xl border border-amber-200 flex items-center gap-1.5">
+          <span className="text-xs font-bold text-amber-700 bg-amber-50 px-3 py-1.5 rounded-xl dark:rounded-none border border-amber-200 flex items-center gap-1.5">
             <AlertTriangle className="w-3.5 h-3.5" />
             <span>2 High Risk Watchlist</span>
           </span>
@@ -58,12 +58,12 @@ export const RailwayControlView: React.FC<RailwayControlViewProps> = ({
       </div>
 
       {/* Main Trains Fleet Table */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-        <div className="p-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
-          <span className="text-xs font-black text-slate-900 uppercase tracking-wider">
+      <div className="bg-white dark:bg-[#1a1a1c] rounded-2xl dark:rounded-none border border-slate-200 dark:border-white/10 shadow-xs overflow-hidden">
+        <div className="p-4 border-b border-slate-100 bg-slate-50 dark:bg-[#141416] flex items-center justify-between">
+          <span className="text-xs font-black text-slate-900 dark:text-[#f2f2f2] uppercase tracking-wider">
             Live Train Movements & Delay Risk Index
           </span>
-          <span className="text-[10px] font-bold text-slate-400">
+          <span className="text-[10px] font-bold text-slate-400 dark:text-[#f2f2f2]/40">
             AUTO-POLLING REFRESH 10S
           </span>
         </div>
@@ -71,7 +71,7 @@ export const RailwayControlView: React.FC<RailwayControlViewProps> = ({
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="bg-white border-b border-slate-200 text-slate-400 font-bold uppercase text-[10px]">
+              <tr className="bg-white dark:bg-[#1a1a1c] border-b border-slate-200 dark:border-white/10 text-slate-400 dark:text-[#f2f2f2]/40 font-bold uppercase text-[10px]">
                 <th className="py-3.5 pl-6 pr-4">Train & Rake Info</th>
                 <th className="py-3.5 px-4">Current Location</th>
                 <th className="py-3.5 px-4">Speed & Signal</th>
@@ -96,22 +96,22 @@ export const RailwayControlView: React.FC<RailwayControlViewProps> = ({
                         ? 'bg-blue-50/70 hover:bg-blue-50' 
                         : isHighRisk 
                         ? 'hover:bg-red-50/30' 
-                        : 'hover:bg-slate-50'
+                        : 'hover:bg-slate-50 dark:bg-[#141416]'
                     }`}
                   >
                     {/* Train Info */}
                     <td className="py-4 pl-6 pr-4">
                       <div className="flex items-center gap-3">
-                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold ${
-                          isSelected ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700'
+                        <div className={`w-9 h-9 rounded-xl dark:rounded-none flex items-center justify-center font-bold ${
+                          isSelected ? 'bg-blue-600 text-white' : 'bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-[#f2f2f2]/80'
                         }`}>
                           <Train className="w-4 h-4" />
                         </div>
                         <div>
-                          <div className="font-extrabold text-slate-900 text-sm">
+                          <div className="font-extrabold text-slate-900 dark:text-[#f2f2f2] text-sm">
                             {train.trainNumber}
                           </div>
-                          <div className="text-[11px] text-slate-500 truncate max-w-[180px]">
+                          <div className="text-[11px] text-slate-500 dark:text-[#f2f2f2]/50 truncate max-w-[180px]">
                             {train.trainName}
                           </div>
                         </div>
@@ -119,19 +119,19 @@ export const RailwayControlView: React.FC<RailwayControlViewProps> = ({
                     </td>
 
                     {/* Location */}
-                    <td className="py-4 px-4 font-bold text-slate-800">
+                    <td className="py-4 px-4 font-bold text-slate-800 dark:text-[#f2f2f2]">
                       <div>{train.currentLocationName}</div>
-                      <div className="text-[10px] text-slate-400 font-medium">
+                      <div className="text-[10px] text-slate-400 dark:text-[#f2f2f2]/40 font-medium">
                         Next: {train.nextStationName} ({train.distanceToNextStationKm} km)
                       </div>
                     </td>
 
                     {/* Speed & Signal */}
                     <td className="py-4 px-4">
-                      <div className="font-mono font-bold text-slate-900">
+                      <div className="font-mono font-bold text-slate-900 dark:text-[#f2f2f2]">
                         {train.currentSpeedKmH} km/h
                       </div>
-                      <div className="text-[10px] text-slate-500 uppercase font-semibold">
+                      <div className="text-[10px] text-slate-500 dark:text-[#f2f2f2]/50 uppercase font-semibold">
                         Signal: {train.signalAspect.replace('_', ' ')}
                       </div>
                     </td>
@@ -164,10 +164,10 @@ export const RailwayControlView: React.FC<RailwayControlViewProps> = ({
 
                     {/* Destination ETA */}
                     <td className="py-4 px-4 font-mono">
-                      <div className="font-extrabold text-sm text-slate-900">
+                      <div className="font-extrabold text-sm text-slate-900 dark:text-[#f2f2f2]">
                         {train.destinationETA}
                       </div>
-                      <div className="text-[10px] text-slate-400">
+                      <div className="text-[10px] text-slate-400 dark:text-[#f2f2f2]/40">
                         Conf: {train.destinationConfidence}%
                       </div>
                     </td>
@@ -177,7 +177,7 @@ export const RailwayControlView: React.FC<RailwayControlViewProps> = ({
                       <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
                         <button
                           onClick={() => onSelectTrain(train)}
-                          className="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
+                          className="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 dark:bg-white/5 hover:bg-slate-200 text-slate-700 dark:text-[#f2f2f2]/80 transition-colors"
                         >
                           Select
                         </button>

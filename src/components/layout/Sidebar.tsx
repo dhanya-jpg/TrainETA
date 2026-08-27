@@ -81,35 +81,30 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const navItems = userRole === 'OPERATOR' ? operatorNavItems : passengerNavItems;
 
   return (
-    <aside className="w-72 bg-[#F8F7F4] text-[#18181A] flex flex-col h-screen border-r border-black/10 shrink-0 select-none font-sans">
+    <aside className="w-[280px] bg-[#F8F7F4] dark:bg-[#141416] text-black dark:text-[#f2f2f2] flex flex-col h-[100dvh] border-r border-black/10 dark:border-[#f2f2f2]/10 shrink-0 select-none font-sans p-6">
       {/* Brand Header */}
-      <div className="p-6 pb-4 border-b border-black/5 flex flex-col gap-2">
-        <div className="flex items-center justify-between">
-          <div className="font-['Space_Mono',monospace] font-bold text-xl tracking-tight flex items-center gap-1.5 text-[#18181A]">
-            <span>SMART ETA</span>
-          </div>
-          <span className="font-['Space_Mono',monospace] text-[9px] uppercase tracking-widest px-2 py-0.5 rounded bg-black/5 text-[#18181A] font-bold border border-black/10">
-            {userRole === 'OPERATOR' ? 'SECTION CTRL' : 'LIVE TELEMETRY'}
-          </span>
+      <div className="mb-12 flex flex-col">
+        <div className="font-syne font-extrabold text-2xl tracking-tight text-black dark:text-[#f2f2f2] uppercase">
+          SMART ETA
         </div>
-        <p className="font-['Space_Mono',monospace] text-[10px] uppercase tracking-wider text-black/50 font-semibold">
-          AI-Powered Dynamic Train ETA
-        </p>
+        <div className="font-mono-code text-[0.55rem] uppercase tracking-[0.15em] text-[#E53E3E] mt-1 font-bold">
+          {userRole === 'OPERATOR' ? 'SECTION CTRL LIVE' : 'SYSTEM LIVE'}
+        </div>
       </div>
 
       {/* Role Pill Switcher */}
-      <div className="px-5 pt-4 pb-2">
-        <div className="bg-white p-1 rounded-xl border border-black/10 shadow-2xs flex items-center text-xs">
+      <div className="mb-6">
+        <div className="bg-[#F8F7F4] dark:bg-[#111113] p-1 rounded-sm border border-black/10 dark:border-[#f2f2f2]/10 flex items-center text-xs">
           <button
             onClick={() => {
               if (userRole !== 'OPERATOR') {
                 onToggleRole();
               }
             }}
-            className={`flex-1 py-1.5 px-2 rounded-lg font-['Space_Mono',monospace] text-[11px] uppercase tracking-wider font-bold transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer ${
+            className={`flex-1 py-1.5 px-2 rounded-[2px] font-mono-code text-[10px] uppercase tracking-wider font-bold transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer ${
               userRole === 'OPERATOR'
-                ? 'bg-[#18181A] text-white shadow-xs'
-                : 'text-black/50 hover:text-black hover:bg-black/5'
+                ? 'bg-white dark:bg-[#1a1a1c] text-black dark:text-[#f2f2f2] border border-black/10 dark:border-[#f2f2f2]/10'
+                : 'text-black/50 dark:text-[#f2f2f2]/50 hover:text-black dark:text-[#f2f2f2] hover:bg-black/5 dark:hover:bg-[#f2f2f2]/5 border border-transparent'
             }`}
           >
             {userRole === 'PASSENGER' && <Lock className="w-3 h-3 text-amber-500" />}
@@ -121,10 +116,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 onToggleRole();
               }
             }}
-            className={`flex-1 py-1.5 px-2 rounded-lg font-['Space_Mono',monospace] text-[11px] uppercase tracking-wider font-bold transition-all text-center cursor-pointer ${
+            className={`flex-1 py-1.5 px-2 rounded-[2px] font-mono-code text-[10px] uppercase tracking-wider font-bold transition-all text-center cursor-pointer ${
               userRole === 'PASSENGER'
-                ? 'bg-[#18181A] text-white shadow-xs'
-                : 'text-black/50 hover:text-black hover:bg-black/5'
+                ? 'bg-white dark:bg-[#1a1a1c] text-black dark:text-[#f2f2f2] border border-black/10 dark:border-[#f2f2f2]/10'
+                : 'text-black/50 dark:text-[#f2f2f2]/50 hover:text-black dark:text-[#f2f2f2] hover:bg-black/5 dark:hover:bg-[#f2f2f2]/5 border border-transparent'
             }`}
           >
             <span>Passenger</span>
@@ -133,9 +128,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* Navigation Links */}
-      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-1.5 custom-scrollbar">
-        <div className="px-3 py-1 font-['Space_Mono',monospace] text-[10px] uppercase tracking-widest text-black/40 font-bold">
-          {userRole === 'OPERATOR' ? 'CONTROL MODULES' : 'PORTAL NAVIGATION'}
+      <div className="flex-1 overflow-y-auto space-y-1.5 custom-scrollbar -mx-2 px-2">
+        <div className="font-mono-code text-[0.6rem] uppercase tracking-[0.2em] text-black/50 dark:text-[#f2f2f2]/50 font-bold mb-4 mt-2">
+          {userRole === 'OPERATOR' ? 'CONTROL MODULES' : 'NAVIGATION'}
         </div>
 
         {navItems.map((item) => {
@@ -145,31 +140,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               key={item.id}
               onClick={() => onSelectTab(item.id)}
-              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-widest transition-all group cursor-pointer border ${
+              className={`w-full flex items-center justify-between px-4 py-2.5 rounded-sm text-[0.85rem] font-medium transition-all group cursor-pointer border ${
                 isActive
-                  ? 'bg-white text-[#E53E3E] font-bold border-black/10 shadow-xs'
-                  : 'text-black/70 hover:text-[#18181A] hover:bg-black/5 border-transparent'
+                  ? 'bg-black/5 dark:bg-[#f2f2f2]/10 text-black dark:text-[#f2f2f2] border-black/10 dark:border-[#f2f2f2]/10'
+                  : 'text-black/50 dark:text-[#f2f2f2]/50 hover:text-black dark:text-[#f2f2f2] hover:bg-black/5 dark:hover:bg-[#f2f2f2]/5 border-transparent'
               }`}
             >
               <div className="flex items-center gap-3">
-                <Icon className={`w-4 h-4 transition-colors ${isActive ? 'text-[#E53E3E]' : 'text-black/40 group-hover:text-black/70'}`} />
-                <span className="font-['Inter',sans-serif] tracking-wider text-[11.5px]">{item.label}</span>
+                <Icon className={`w-4 h-4 transition-colors ${isActive ? 'text-black dark:text-[#f2f2f2]' : 'text-black/50 dark:text-[#f2f2f2]/50 group-hover:text-black dark:text-[#f2f2f2]'}`} />
+                <span className="font-['Inter',sans-serif]">{item.label}</span>
               </div>
               
               <div className="flex items-center gap-1.5">
                 {'badge' in item && item.badge && (
-                  <span className={`font-['Space_Mono',monospace] text-[9px] font-bold px-1.5 py-0.5 rounded ${
+                  <span className={`font-mono-code text-[9px] font-bold px-1.5 py-0.5 rounded-sm ${
                     typeof item.badge === 'number'
                       ? 'bg-[#E53E3E] text-white'
-                      : isActive ? 'bg-[#E53E3E]/10 text-[#E53E3E]' : 'bg-black/5 text-black/60'
+                      : isActive ? 'bg-black/5 dark:bg-[#f2f2f2]/10 text-black dark:text-[#f2f2f2]' : 'bg-black/5 dark:bg-[#f2f2f2]/10 text-black dark:text-[#f2f2f2]/60'
                   }`}>
                     {item.badge}
                   </span>
-                )}
-                {isActive ? (
-                  <div className="w-1.5 h-1.5 rounded-full bg-[#E53E3E]" />
-                ) : (
-                  <ChevronRight className="w-3.5 h-3.5 text-black/20 opacity-0 group-hover:opacity-100 transition-opacity" />
                 )}
               </div>
             </button>
@@ -178,20 +168,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* User Session & Logout Footer */}
-      <div className="p-4 border-t border-black/10 bg-white/60 space-y-2">
-        <div className="flex items-center justify-between p-2 rounded-xl bg-white border border-black/10 shadow-2xs">
-          <div className="flex items-center gap-2.5 overflow-hidden">
-            <div className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs text-white shrink-0 ${
-              userRole === 'OPERATOR' ? 'bg-[#18181A]' : 'bg-[#E53E3E]'
+      <div className="pt-6 border-t border-black/10 dark:border-[#f2f2f2]/10 mt-auto">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 overflow-hidden">
+            <div className={`w-10 h-10 rounded-sm flex items-center justify-center font-bold text-xs text-white shrink-0 ${
+              userRole === 'OPERATOR' ? 'bg-white dark:bg-[#1a1a1c] border border-[#f2f2f2]/20' : 'bg-[#E53E3E]'
             }`}>
-              {userRole === 'OPERATOR' ? <Shield className="w-3.5 h-3.5" /> : <User className="w-3.5 h-3.5" />}
+              {userRole === 'OPERATOR' ? 'OP' : 'VP'}
             </div>
             <div className="overflow-hidden">
-              <div className="text-[11px] font-bold text-[#18181A] truncate">
-                {currentUser?.name || (userRole === 'OPERATOR' ? 'Section Controller' : 'Passenger')}
+              <div className="text-sm font-bold text-black dark:text-[#f2f2f2] truncate">
+                {currentUser?.name || (userRole === 'OPERATOR' ? 'Section Controller' : 'Ved Patel')}
               </div>
-              <div className="text-[10px] text-black/50 font-['Space_Mono',monospace] truncate">
-                {currentUser?.email || (userRole === 'OPERATOR' ? 'trainoperator@gmail.com' : 'passenger@smarteta.in')}
+              <div className="text-[0.6rem] text-black/50 dark:text-[#f2f2f2]/50 font-mono-code truncate tracking-wider mt-0.5">
+                {currentUser?.email || (userRole === 'OPERATOR' ? 'trainoperator@gmail.com' : 'ved1801@gmail.com')}
               </div>
             </div>
           </div>
@@ -199,7 +189,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {onLogout && (
             <button
               onClick={onLogout}
-              className="p-1.5 text-black/40 hover:text-[#E53E3E] hover:bg-black/5 rounded-lg transition-colors cursor-pointer"
+              className="p-2 text-black dark:text-[#f2f2f2]/40 hover:text-[#E53E3E] hover:bg-black/5 dark:hover:bg-[#f2f2f2]/5 rounded-sm transition-colors cursor-pointer"
               title="Sign Out"
             >
               <LogOut className="w-4 h-4" />

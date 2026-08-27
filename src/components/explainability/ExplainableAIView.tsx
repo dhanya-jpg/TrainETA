@@ -24,19 +24,19 @@ export const ExplainableAIView: React.FC<ExplainableAIViewProps> = ({ train }) =
   const netAdditionalDelay = totalPositive + totalNegative;
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 lg:p-8 space-y-6">
+    <div className="bg-white dark:bg-[#1a1a1c] rounded-2xl dark:rounded-none border border-slate-200 dark:border-white/10 shadow-xs p-6 lg:p-8 space-y-6">
       {/* Header with Title & Badge */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-100">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl dark:rounded-none bg-indigo-50 text-indigo-600 flex items-center justify-center">
               <BrainCircuit className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
+              <h2 className="text-lg sm:text-xl font-black text-slate-900 dark:text-[#f2f2f2] tracking-tight">
                 Why is Train {train.trainNumber} expected to remain late?
               </h2>
-              <p className="text-xs text-slate-500 font-medium">
+              <p className="text-xs text-slate-500 dark:text-[#f2f2f2]/50 font-medium">
                 Explainable AI (XAI) feature attribution decomposed from real-time operational telemetry.
               </p>
             </div>
@@ -44,7 +44,7 @@ export const ExplainableAIView: React.FC<ExplainableAIViewProps> = ({ train }) =
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-[11px] font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-xl border border-indigo-200">
+          <span className="text-[11px] font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-xl dark:rounded-none border border-indigo-200">
             SIMULATION ANALYSIS • SHAP VALUES
           </span>
         </div>
@@ -52,7 +52,7 @@ export const ExplainableAIView: React.FC<ExplainableAIViewProps> = ({ train }) =
 
       {/* Feature Attribution Bar Breakdown */}
       <div className="space-y-4">
-        <div className="text-xs font-black text-slate-400 uppercase tracking-wider">
+        <div className="text-xs font-black text-slate-400 dark:text-[#f2f2f2]/40 uppercase tracking-wider">
           Primary Delay Contributing Factors & Sectional Slack
         </div>
 
@@ -65,7 +65,7 @@ export const ExplainableAIView: React.FC<ExplainableAIViewProps> = ({ train }) =
             return (
               <div 
                 key={factor.id} 
-                className="bg-slate-50/80 p-4 rounded-xl border border-slate-200/80 space-y-2 hover:bg-slate-50 transition-colors"
+                className="bg-slate-50 dark:bg-[#141416]/80 p-4 rounded-xl dark:rounded-none border border-slate-200 dark:border-white/10/80 space-y-2 hover:bg-slate-50 dark:bg-[#141416] transition-colors"
               >
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
@@ -74,7 +74,7 @@ export const ExplainableAIView: React.FC<ExplainableAIViewProps> = ({ train }) =
                     ) : (
                       <TrendingDown className="w-4 h-4 text-emerald-500" />
                     )}
-                    <span className="font-extrabold text-sm text-slate-900">{factor.name}</span>
+                    <span className="font-extrabold text-sm text-slate-900 dark:text-[#f2f2f2]">{factor.name}</span>
                   </div>
 
                   <div className={`font-mono font-black text-sm ${isPositive ? 'text-red-600' : 'text-emerald-600'}`}>
@@ -90,7 +90,7 @@ export const ExplainableAIView: React.FC<ExplainableAIViewProps> = ({ train }) =
                   />
                 </div>
 
-                <p className="text-xs text-slate-500 font-medium">
+                <p className="text-xs text-slate-500 dark:text-[#f2f2f2]/50 font-medium">
                   {factor.description}
                 </p>
               </div>
@@ -100,7 +100,7 @@ export const ExplainableAIView: React.FC<ExplainableAIViewProps> = ({ train }) =
       </div>
 
       {/* Summary Box & Operational Insight */}
-      <div className="bg-indigo-50/70 border border-indigo-200 rounded-2xl p-5 space-y-3">
+      <div className="bg-indigo-50/70 border border-indigo-200 rounded-2xl dark:rounded-none p-5 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-indigo-900 font-extrabold text-sm">
             <Info className="w-4 h-4 text-indigo-600" />
@@ -111,11 +111,11 @@ export const ExplainableAIView: React.FC<ExplainableAIViewProps> = ({ train }) =
           </div>
         </div>
 
-        <p className="text-xs text-slate-700 leading-relaxed font-medium">
+        <p className="text-xs text-slate-700 dark:text-[#f2f2f2]/80 leading-relaxed font-medium">
           Historical route patterns and current operating conditions indicate a <strong>medium probability of additional delay</strong> between Anand and Ahmedabad. The major contributing element is the upstream late handover at Surat combined with freight headway occupancy on the trunk route, partially cushioned by a 2-minute sectional engineering recovery slack.
         </p>
 
-        <div className="text-[11px] text-slate-500 italic pt-1 border-t border-indigo-100 flex items-center gap-1.5">
+        <div className="text-[11px] text-slate-500 dark:text-[#f2f2f2]/50 italic pt-1 border-t border-indigo-100 flex items-center gap-1.5">
           <Sparkles className="w-3 h-3 text-indigo-500" />
           <span>Note: Explanations are derived from the feature importance weights of the XGBoost dynamic residual model.</span>
         </div>

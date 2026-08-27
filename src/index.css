@@ -1,9 +1,26 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
 :root {
   --bg: #F8F7F4;
   --ink: #18181A;
   --accent: #E53E3E;
+  --surface: #ffffff;
+  --surface-low: #F8F7F4;
+  --border: rgba(24, 24, 26, 0.1);
+  --ink-dim: rgba(24, 24, 26, 0.5);
+  --ink-faint: rgba(24, 24, 26, 0.1);
+}
+
+.dark {
+  --bg: #111113;
+  --ink: #f2f2f2;
+  --accent: #E53E3E;
+  --surface: #1a1a1c;
+  --surface-low: #141416;
+  --border: rgba(242, 242, 242, 0.08);
+  --ink-dim: rgba(242, 242, 242, 0.5);
+  --ink-faint: rgba(242, 242, 242, 0.1);
 }
 
 * {
@@ -15,36 +32,35 @@ body {
   margin: 0;
   background-color: var(--bg);
   color: var(--ink);
-  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   min-height: 100vh;
 }
 
 ::selection {
   background: var(--accent);
-  color: var(--bg);
+  color: white;
 }
 
 .font-mono-code {
-  font-family: 'Space Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
 }
 
-.font-display {
-  font-family: 'Inter', sans-serif;
-  letter-spacing: -0.04em;
+.font-syne {
+  font-family: 'Syne', sans-serif;
 }
 
 .meta-label {
-  font-family: 'Space Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
   font-size: 0.65rem;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
-  opacity: 0.6;
+  letter-spacing: 0.15em;
+  color: var(--ink-dim);
 }
 
 /* Custom scrollbar for editorial minimalist aesthetic */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 4px;
+  height: 4px;
 }
 
 ::-webkit-scrollbar-track {
@@ -52,10 +68,10 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(24, 24, 26, 0.2);
-  border-radius: 3px;
+  background: var(--ink-faint);
+  border-radius: 2px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(24, 24, 26, 0.4);
+  background: var(--ink-dim);
 }
