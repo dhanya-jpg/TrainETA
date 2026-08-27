@@ -66,98 +66,112 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
   };
 
   return (
-    <div className="w-full px-3 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8 space-y-6 sm:space-y-8 max-w-[1200px] mx-auto pb-16 overflow-x-hidden">
+    <div className="w-full space-y-4 max-w-[1280px] mx-auto pb-10 overflow-x-hidden">
       
-      {/* 1. HERO SECTION (Editorial Brutalist Aesthetic) */}
-      <section className="grid grid-cols-1 md:grid-cols-[1fr_auto] items-start md:items-end gap-6 pt-2">
-        <div className="min-w-0">
-          <div className="font-mono-code text-[0.65rem] uppercase tracking-[0.15em] text-[#E53E3E] font-bold mb-3 sm:mb-4">
-            [01] PLATFORM STATUS: LIVE
+      {/* 1. COMPACT HEADER BAR */}
+      <section className="bg-white dark:bg-[#1a1a1c] p-4 sm:p-5 rounded-xl dark:rounded-none border border-black/10 dark:border-white/10 shadow-2xs">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="min-w-0 space-y-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-sm bg-[#E53E3E]/10 text-[#E53E3E] text-[10px] font-mono-code font-bold uppercase tracking-wider">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#E53E3E] animate-ping" />
+                LIVE COMMUTER PORTAL
+              </span>
+              <span className={`inline-flex items-center px-2 py-0.5 rounded-sm text-[10px] font-mono-code font-bold uppercase ${
+                selectedTrain.currentDelayMinutes > 5
+                  ? 'bg-[#E53E3E]/10 text-[#E53E3E] border border-[#E53E3E]/30'
+                  : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
+              }`}>
+                {selectedTrain.currentDelayMinutes > 0
+                  ? `+${selectedTrain.currentDelayMinutes} MIN DELAYED`
+                  : 'RUNNING ON SCHEDULE'}
+              </span>
+            </div>
+
+            <div className="flex flex-wrap items-baseline gap-2.5">
+              <h1 className="font-syne text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight uppercase text-[#18181A] dark:text-[#f2f2f2]">
+                {selectedTrain.trainNumber} • {selectedTrain.trainName}
+              </h1>
+            </div>
+
+            <p className="text-xs text-[#18181A]/70 dark:text-[#f2f2f2]/60 font-medium">
+              {selectedTrain.sourceName} → {selectedTrain.destinationName} • Near <strong className="text-[#18181A] dark:text-[#f2f2f2]">{selectedTrain.currentLocationName}</strong> at <span className="font-mono-code font-bold text-[#E53E3E]">{selectedTrain.currentSpeedKmH} km/h</span>
+            </p>
           </div>
 
-          <h1 className="font-syne text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight uppercase text-[#18181A] dark:text-[#f2f2f2] leading-[1.05] break-words">
-            Intelligence<br className="hidden sm:inline" /> in Transit.
-          </h1>
-          <p className="text-xs sm:text-sm text-[#18181A]/70 dark:text-[#f2f2f2]/60 font-medium mt-3 sm:mt-4 max-w-[500px] leading-relaxed">
-            AI-Powered Dynamic Train ETA & Delay Platform with real-time GPS telemetry and explainable ML regression.
-          </p>
-        </div>
-
-        <div className="flex flex-row md:flex-col items-center md:items-end justify-between gap-4 w-full md:w-auto">
-          <div className="font-mono-code text-[0.65rem] uppercase tracking-[0.15em] text-[#18181A]/60 dark:text-[#f2f2f2]/50 hidden lg:block" style={{ writingMode: 'vertical-rl' }}>
-            COMMUTER MODE • {selectedTrain.trainName}
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={handleShareETA}
+              className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[#E53E3E] hover:bg-red-700 text-white rounded-sm text-xs font-mono-code uppercase font-bold transition-all border-none cursor-pointer shadow-xs"
+            >
+              {copiedNotification ? (
+                <>
+                  <CheckCircle2 className="w-4 h-4 text-white" />
+                  <span>ETA COPIED!</span>
+                </>
+              ) : (
+                <>
+                  <Share2 className="w-4 h-4" />
+                  <span>SHARE LIVE ETA</span>
+                </>
+              )}
+            </button>
           </div>
-          <button
-            onClick={handleShareETA}
-            className="w-full md:w-auto flex items-center justify-center gap-2 px-5 py-3 bg-[#E53E3E] hover:opacity-90 text-white rounded-[2px] text-xs font-mono-code uppercase font-bold transition-all border-none cursor-pointer shadow-sm"
-          >
-            {copiedNotification ? (
-              <>
-                <CheckCircle2 className="w-4 h-4 text-white" />
-                <span>ETA COPIED!</span>
-              </>
-            ) : (
-              <>
-                <Share2 className="w-4 h-4" />
-                <span>SHARE LIVE ETA</span>
-              </>
-            )}
-          </button>
         </div>
       </section>
 
-      {/* 2. SIGNATURE CARD GRID (3-Column Editorial Grid) */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-[1px] bg-transparent lg:bg-black/10 lg:dark:bg-[#f2f2f2]/10 lg:border lg:border-black/10 lg:dark:border-[#f2f2f2]/10 mt-6 sm:mt-8">
-        {/* Card 1: Current Selection */}
-        <div className="bg-[#F8F7F4] dark:bg-[#111113] p-5 sm:p-6 lg:p-8 flex flex-col justify-between rounded-xl lg:rounded-none border border-black/10 dark:border-[#f2f2f2]/10 lg:border-none">
+      {/* 2. SIGNATURE STAT METRICS (3-Column Dense Grid) */}
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+        {/* Card 1: Selected Train & Route */}
+        <div className="bg-white dark:bg-[#1a1a1c] p-4 sm:p-5 rounded-xl dark:rounded-none border border-black/10 dark:border-[#f2f2f2]/10 flex flex-col justify-between shadow-2xs">
           <div>
-            <div className="font-mono-code text-[0.6rem] uppercase tracking-[0.15em] text-[#18181A]/60 dark:text-[#f2f2f2]/50 mb-2">
-              Current Selection
+            <div className="font-mono-code text-[0.65rem] uppercase tracking-[0.12em] text-[#18181A]/60 dark:text-[#f2f2f2]/50 mb-1">
+              Active Train & Status
             </div>
-            <div className="text-3xl sm:text-4xl lg:text-5xl font-syne font-extrabold text-[#18181A] dark:text-[#f2f2f2] leading-none tracking-tight">
+            <div className="text-2xl sm:text-3xl font-syne font-extrabold text-[#18181A] dark:text-[#f2f2f2] leading-tight tracking-tight">
               {selectedTrain.trainNumber}
             </div>
           </div>
-          <div className="font-mono-code text-[0.65rem] text-[#18181A]/70 dark:text-[#f2f2f2]/50 uppercase tracking-[0.05em] mt-5 pt-3 border-t border-black/10 dark:border-[#f2f2f2]/10 truncate">
-            {selectedTrain.trainName} ({selectedTrain.sourceName.split(' ')[0]} → {selectedTrain.destinationName.split(' ')[0]})
+          <div className="font-mono-code text-[0.65rem] text-[#18181A]/70 dark:text-[#f2f2f2]/60 uppercase tracking-[0.05em] mt-3 pt-2.5 border-t border-black/10 dark:border-[#f2f2f2]/10 truncate">
+            {selectedTrain.sourceName.split(' ')[0]} → {selectedTrain.destinationName.split(' ')[0]} • Next: {selectedTrain.nextStationName}
           </div>
         </div>
 
-        {/* Card 2: Predicted Arrival */}
-        <div className="bg-[#F8F7F4] dark:bg-[#111113] p-5 sm:p-6 lg:p-8 flex flex-col justify-between rounded-xl lg:rounded-none border border-black/10 dark:border-[#f2f2f2]/10 lg:border-none">
+        {/* Card 2: Dynamic ETA to Target Stop */}
+        <div className="bg-white dark:bg-[#1a1a1c] p-4 sm:p-5 rounded-xl dark:rounded-none border border-black/10 dark:border-[#f2f2f2]/10 flex flex-col justify-between shadow-2xs">
           <div>
-            <div className="font-mono-code text-[0.6rem] uppercase tracking-[0.15em] text-[#18181A]/60 dark:text-[#f2f2f2]/50 mb-2">
-              Predicted Arrival
+            <div className="font-mono-code text-[0.65rem] uppercase tracking-[0.12em] text-[#18181A]/60 dark:text-[#f2f2f2]/50 mb-1">
+              Predicted Arrival @ {targetStop.stationCode}
             </div>
-            <div className="text-3xl sm:text-4xl lg:text-5xl font-syne font-extrabold text-[#E53E3E] leading-none tracking-tight">
+            <div className="text-2xl sm:text-3xl font-syne font-extrabold text-[#E53E3E] leading-tight tracking-tight">
               {targetStop.predictedArrival}
             </div>
           </div>
-          <div className="font-mono-code text-[0.65rem] text-[#18181A]/70 dark:text-[#f2f2f2]/50 uppercase tracking-[0.05em] mt-5 pt-3 border-t border-black/10 dark:border-[#f2f2f2]/10 truncate">
-            {targetStop.stationName} • {targetStop.confidenceScore}% CONF
+          <div className="font-mono-code text-[0.65rem] text-[#18181A]/70 dark:text-[#f2f2f2]/60 uppercase tracking-[0.05em] mt-3 pt-2.5 border-t border-black/10 dark:border-[#f2f2f2]/10 truncate">
+            Window: {targetStop.etaRange} • {targetStop.confidenceScore}% Conf
           </div>
         </div>
 
-        {/* Card 3: Advisory */}
-        <div className="bg-white dark:bg-[#1a1a1c] p-5 sm:p-6 lg:p-8 flex flex-col justify-between rounded-xl lg:rounded-none border border-black/10 dark:border-[#f2f2f2]/10 lg:border-none sm:col-span-2 lg:col-span-1">
+        {/* Card 3: Boarding Advisory */}
+        <div className="bg-white dark:bg-[#1a1a1c] p-4 sm:p-5 rounded-xl dark:rounded-none border border-black/10 dark:border-[#f2f2f2]/10 flex flex-col justify-between shadow-2xs sm:col-span-2 lg:col-span-1">
           <div>
-            <div className="font-mono-code text-[0.6rem] uppercase tracking-[0.15em] text-[#E53E3E] font-bold mb-2">
-              Advisory
+            <div className="font-mono-code text-[0.65rem] uppercase tracking-[0.12em] text-[#E53E3E] font-bold mb-1">
+              Station Arrival Advisory
             </div>
-            <div className="text-2xl sm:text-3xl lg:text-4xl font-syne font-extrabold text-[#18181A] dark:text-[#f2f2f2] leading-tight tracking-tight">
+            <div className="text-xl sm:text-2xl font-syne font-extrabold text-[#18181A] dark:text-[#f2f2f2] leading-tight tracking-tight">
               Arrive by {suggestedStationArrival}
             </div>
           </div>
-          <div className="font-mono-code text-[0.65rem] text-[#18181A]/70 dark:text-[#f2f2f2]/70 uppercase tracking-[0.05em] mt-5 pt-3 border-t border-black/10 dark:border-[#f2f2f2]/10 truncate">
-            Platform #{targetStop.platform} Boarding & Screening
+          <div className="font-mono-code text-[0.65rem] text-[#18181A]/70 dark:text-[#f2f2f2]/60 uppercase tracking-[0.05em] mt-3 pt-2.5 border-t border-black/10 dark:border-[#f2f2f2]/10 truncate">
+            Platform #{targetStop.platform} • 18m Security Slack
           </div>
         </div>
       </section>
 
       {/* 3. TRAIN CONTROLS & DESTINATION SELECTOR BAR */}
-      <section className="bg-white dark:bg-[#1a1a1c] p-4 sm:p-6 rounded-xl dark:rounded-none border border-black/10 dark:border-white/10 shadow-2xs space-y-4">
+      <section className="bg-white dark:bg-[#1a1a1c] p-4 sm:p-5 rounded-xl dark:rounded-none border border-black/10 dark:border-white/10 shadow-2xs space-y-3.5">
         {/* Active Train Quick Selector Chips */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1.5 scrollbar-thin">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin">
           <span className="font-mono-code text-[10px] font-bold text-[#18181A]/50 dark:text-[#f2f2f2]/50 uppercase tracking-widest shrink-0 mr-1">
             QUICK SWITCH:
           </span>
@@ -192,7 +206,7 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
                 value={searchNo}
                 onChange={(e) => setSearchNo(e.target.value)}
                 placeholder="e.g. 22436, 12951..."
-                className="w-full pl-10 pr-4 py-2.5 bg-[#F8F7F4] dark:bg-[#141416] border border-black/10 dark:border-white/10 rounded-sm text-xs font-bold text-[#18181A] dark:text-[#f2f2f2] focus:outline-none focus:border-[#E53E3E]"
+                className="w-full pl-10 pr-4 py-2 bg-[#F8F7F4] dark:bg-[#141416] border border-black/10 dark:border-white/10 rounded-sm text-xs font-bold text-[#18181A] dark:text-[#f2f2f2] focus:outline-none focus:border-[#E53E3E]"
               />
             </div>
           </div>
@@ -204,7 +218,7 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
             <select
               value={destinationCode}
               onChange={(e) => setDestinationCode(e.target.value)}
-              className="w-full px-3.5 py-2.5 bg-[#F8F7F4] dark:bg-[#141416] border border-black/10 dark:border-white/10 rounded-sm text-xs font-bold text-[#18181A] dark:text-[#f2f2f2] focus:outline-none focus:border-[#E53E3E] truncate"
+              className="w-full px-3.5 py-2 bg-[#F8F7F4] dark:bg-[#141416] border border-black/10 dark:border-white/10 rounded-sm text-xs font-bold text-[#18181A] dark:text-[#f2f2f2] focus:outline-none focus:border-[#E53E3E] truncate"
             >
               {selectedTrain.stops.map((s) => (
                 <option key={s.stationCode} value={s.stationCode} className="bg-white dark:bg-[#1a1a1c] text-[#18181A] dark:text-[#f2f2f2]">
@@ -217,7 +231,7 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
           <div className="sm:col-span-2 lg:col-span-2 flex items-end">
             <button
               type="submit"
-              className="w-full h-[40px] bg-[#18181A] dark:bg-[#E53E3E] hover:bg-black dark:hover:bg-red-700 text-white rounded-sm text-xs font-mono-code font-bold uppercase tracking-wider transition-colors shadow-xs cursor-pointer flex items-center justify-center border-none"
+              className="w-full h-[36px] bg-[#18181A] dark:bg-[#E53E3E] hover:bg-black dark:hover:bg-red-700 text-white rounded-sm text-xs font-mono-code font-bold uppercase tracking-wider transition-colors shadow-xs cursor-pointer flex items-center justify-center border-none"
             >
               Apply
             </button>
@@ -225,7 +239,7 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
         </form>
 
         {/* View Mode Navigation Tabs */}
-        <div className="flex items-center gap-2 pt-3 border-t border-black/10 dark:border-white/10 overflow-x-auto pb-1.5 scrollbar-thin">
+        <div className="flex items-center gap-2 pt-3 border-t border-black/10 dark:border-white/10 overflow-x-auto pb-1 scrollbar-thin">
           <button
             onClick={() => setActiveSubTab('eta')}
             className={`shrink-0 whitespace-nowrap flex items-center gap-2 px-3.5 py-2 rounded-sm text-xs font-mono-code uppercase tracking-wider font-bold transition-all cursor-pointer border ${

@@ -323,7 +323,7 @@ export function App() {
         />
 
         {/* Scrollable View Container */}
-        <main className="flex-1 overflow-y-auto p-3 sm:p-5 lg:p-8 space-y-4 sm:space-y-6 custom-scrollbar min-w-0">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-5 lg:p-6 space-y-4 sm:space-y-6 custom-scrollbar min-w-0">
           {/* TAB: Dashboard (Operator) */}
           {activeTab === 'dashboard' && userRole === 'OPERATOR' && (
             <div className="space-y-6">

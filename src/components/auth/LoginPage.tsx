@@ -57,24 +57,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     }
   };
 
-  // Quick autofill helper for Operator
-  const autofillOperator = () => {
-    setEmail('trainoperator@gmail.com');
-    setPassword('eta161739');
-    setSelectedRole('OPERATOR');
-    setAuthMode('signin');
-    setErrorMessage(null);
-  };
-
-  // Quick autofill helper for Commuter
-  const autofillPassenger = () => {
-    setEmail('commuter@smarteta.in');
-    setPassword('pass1234');
-    setName('Aarav Sharma');
-    setSelectedRole('PASSENGER');
-    setErrorMessage(null);
-  };
-
   // Handle Form Submit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -500,29 +482,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({
               </button>
             </div>
           </form>
-
-          {/* Quick Demo Autofill Chips */}
-          <div className="pt-3 border-t border-black/10 dark:border-white/10 flex flex-wrap items-center justify-between gap-2 text-xs">
-            <span className="font-['Space_Mono',monospace] dark:font-['JetBrains_Mono',monospace] text-[10px] uppercase tracking-wider text-black/40 dark:text-black/40 dark:text-white/40 font-bold">
-              QUICK ACCESS:
-            </span>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={autofillPassenger}
-                className="px-2.5 py-1 rounded-xl dark:rounded-none bg-[#F8F7F4] dark:bg-[#111113] hover:bg-black/5 dark:hover:bg-white dark:bg-[#1a1a1c]/5 text-[#18181A] dark:text-[#f2f2f2] border border-black/10 dark:border-white/10 font-['Space_Mono',monospace] dark:font-['JetBrains_Mono',monospace] font-bold text-[10px] uppercase transition-colors cursor-pointer"
-              >
-                Passenger Demo
-              </button>
-              <button
-                type="button"
-                onClick={autofillOperator}
-                className="px-2.5 py-1 rounded-xl dark:rounded-none bg-[#E53E3E] text-black dark:text-white hover:bg-red-700 border-none font-['Space_Mono',monospace] dark:font-['JetBrains_Mono',monospace] font-bold text-[10px] uppercase transition-colors cursor-pointer"
-              >
-                Operator Official
-              </button>
-            </div>
-          </div>
 
         </div>
       </main>

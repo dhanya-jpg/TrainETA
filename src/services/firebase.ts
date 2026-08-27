@@ -35,8 +35,8 @@ const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 // Initialize Firebase Auth
 export const auth = getAuth(app);
 
-// Initialize Firestore
-export const db: Firestore = getFirestore(app);
+// Initialize Firestore with specific database ID from config
+export const db: Firestore = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 
 // Google Auth Provider
 const googleProvider = new GoogleAuthProvider();
