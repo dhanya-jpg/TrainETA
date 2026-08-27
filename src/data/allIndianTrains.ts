@@ -1225,8 +1225,10 @@ function formatMinutesToTime(totalMinutes: number): string {
   return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
 }
 
-export function generateAllRunningTrains(): TrainData[] {
-  const baseEpochMinutes = 6 * 60; // 06:00 AM base start time for reference
+export function generateAllRunningTrains(referenceDate: Date = new Date()): TrainData[] {
+  const nowHours = referenceDate.getHours();
+  const nowMinutes = referenceDate.getMinutes();
+  const currentTotalMinutesOfDay = nowHours * 60 + nowMinutes;
 
   return ALL_INDIAN_TRAIN_TEMPLATES.map((tmpl, trainIdx) => {
     const routeStationsGeo = tmpl.routeStations.map((code) => {
@@ -1273,17 +1275,26 @@ export function generateAllRunningTrains(): TrainData[] {
     const currentLongitude = Number((currStnGeo.lng + (nextStnGeo.lng - currStnGeo.lng) * segRatio).toFixed(4));
     const distanceToNextStationKm = Math.max(5, Math.round(segEndDist - currentProgressDist));
 
+    // Calculate realistic total journey duration based on distance and average speed
+    const avgOperationalSpeed = tmpl.maxSpeedKmH * 0.82;
+    const totalJourneyMinutes = Math.round((totalDistanceKm / avgOperationalSpeed) * 60) + (routeStationsGeo.length - 1) * 4;
+    
+    // In real-time tracking, a train running currently at progressPercent has been travelling for:
+    const elapsedJourneyMinutes = Math.round((tmpl.progressPercent / 100) * totalJourneyMinutes);
+    // Origin scheduled departure time in minutes from midnight:
+    const originSchedDepMinutes = (currentTotalMinutesOfDay - elapsedJourneyMinutes - tmpl.currentDelayMinutes + 14400) % 1440;
+
     // Construct realistic stops
-    let runningSchedMins = baseEpochMinutes + (trainIdx * 25) % 180;
+    let runningSchedMins = originSchedDepMinutes;
     const stops: StationStop[] = routeStationsGeo.map((stn, idx) => {
       const dist = distances[idx];
       const prevDist = idx > 0 ? distances[idx - 1] : 0;
       const legDist = dist - prevDist;
       
-      const travelMins = idx === 0 ? 0 : Math.round((legDist / (tmpl.maxSpeedKmH * 0.85)) * 60);
-      const schedArr = runningSchedMins + travelMins;
-      const haltMins = idx === 0 || idx === routeStationsGeo.length - 1 ? 0 : (idx % 2 === 0 ? 5 : 3);
-      const schedDep = schedArr + haltMins;
+      const travelMins = idx === 0 ? 0 : Math.round((legDist / avgOperationalSpeed) * 60);
+      const schedArr = (runningSchedMins + travelMins) % 1440;
+      const haltMins = idx === 0 || idx === routeStationsGeo.length - 1 ? 0 : (idx % 2 === 0 ? 4 : 2);
+      const schedDep = (schedArr + haltMins) % 1440;
       runningSchedMins = schedDep;
 
       // Predict delays
@@ -1294,7 +1305,7 @@ export function generateAllRunningTrains(): TrainData[] {
         status = 'DEPARTED';
         predictedDelay = Math.max(0, tmpl.currentDelayMinutes - (currStationIndex - idx) * 2);
       } else if (idx === currStationIndex) {
-        status = segRatio > 0.8 ? 'CURRENT' : 'DEPARTED';
+        status = segRatio > 0.85 ? 'CURRENT' : 'DEPARTED';
         predictedDelay = tmpl.currentDelayMinutes;
       } else if (idx === nextStationIndex) {
         status = 'NEXT';
@@ -1306,8 +1317,8 @@ export function generateAllRunningTrains(): TrainData[] {
         predictedDelay = Math.max(0, tmpl.currentDelayMinutes - extraSlackRecovery);
       }
 
-      const predArr = schedArr + predictedDelay;
-      const predDep = schedDep + predictedDelay;
+      const predArr = (schedArr + predictedDelay) % 1440;
+      const predDep = (schedDep + predictedDelay) % 1440;
       const confScore = Math.max(82, Math.min(99, 99 - (idx - currStationIndex) * 3));
 
       const spread = Math.max(2, Math.round((100 - confScore) * 0.4));
@@ -1376,6 +1387,8 @@ export function generateAllRunningTrains(): TrainData[] {
       }
     ];
 
+    const timeStr = `${String(nowHours).padStart(2, '0')}:${String(nowMinutes).padStart(2, '0')}`;
+
     return {
       id: `train-${tmpl.trainNumber}`,
       trainNumber: tmpl.trainNumber,
@@ -1396,7 +1409,7 @@ export function generateAllRunningTrains(): TrainData[] {
       nextStationCode: nextStnGeo.code,
       nextStationName: nextStnGeo.name,
       distanceToNextStationKm,
-      lastUpdated: 'Live GPS Telemetry',
+      lastUpdated: `Live GPS • ${timeStr} IST`,
       signalAspect: tmpl.signalAspect,
       weather: tmpl.weather,
       trackCondition: tmpl.trackCondition,

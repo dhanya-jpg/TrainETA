@@ -23,6 +23,7 @@ import { UserActivityModal } from './components/activity/UserActivityModal';
 import { MOCK_TRAINS, MOCK_ALERTS, MOCK_ANALYTICS } from './data/mockTrains';
 import { TrainData, UserRole, RailwayAlert, AnalyticsSummary, AuthUser } from './types';
 import { recalculateTrainETAs } from './services/etaPredictionService';
+import { advanceTrainPhysics } from './services/trainSimulationEngine';
 import { logUserActivity, logRecentSearch, logoutFirebase } from './services/firebase';
 
 const STORAGE_KEY = 'smart_eta_auth_user_v2';
@@ -194,27 +195,21 @@ export function App() {
     setAlerts((prev) => prev.filter((a) => a.id !== id));
   };
 
-  // Live telemetry pulse simulator
+  // Live telemetry & continuous train physics movement loop
   useEffect(() => {
     if (!isSimulating || !currentUser) return;
 
-    const intervalMs = Math.max(3000, 10000 / simSpeed);
+    // Fast 1000ms tick for fluid train movement along railway track
+    const intervalMs = 1000;
+    let lastTickTime = Date.now();
 
     const timer = setInterval(() => {
-      setTrains((prevTrains) =>
-        prevTrains.map((t) => {
-          // Realistic GPS drift / speed fluctuations
-          const speedVariance = (Math.random() - 0.5) * 4;
-          const newSpeed = Math.max(35, Math.min(130, Math.round(t.currentSpeedKmH + speedVariance)));
-          
-          // Recompute with updated speed
-          const updated = recalculateTrainETAs(t, {
-            speedKmH: newSpeed,
-            delayMinutes: t.currentDelayMinutes,
-          });
+      const now = Date.now();
+      const deltaSec = Math.max(0.5, Math.min(3, (now - lastTickTime) / 1000));
+      lastTickTime = now;
 
-          return updated;
-        })
+      setTrains((prevTrains) =>
+        prevTrains.map((t) => advanceTrainPhysics(t, deltaSec, simSpeed))
       );
     }, intervalMs);
 

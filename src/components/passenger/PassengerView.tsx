@@ -324,6 +324,57 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
               </div>
             </div>
 
+            {/* Live Journey Motion Progress Track */}
+            <div className="p-4 sm:p-5 rounded-lg dark:rounded-none bg-[#F8F7F4] dark:bg-[#141416] border border-black/10 dark:border-white/10 space-y-3">
+              <div className="flex items-center justify-between text-xs font-bold text-[#18181A] dark:text-[#f2f2f2]">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                  <span className="font-mono-code uppercase text-[11px] text-emerald-600 dark:text-emerald-400 font-extrabold">
+                    Live Rail Motion
+                  </span>
+                </div>
+                <div className="font-mono-code text-xs text-[#18181A]/60 dark:text-[#f2f2f2]/50">
+                  {selectedTrain.currentSpeedKmH} km/h • {selectedTrain.distanceToNextStationKm} km to {selectedTrain.nextStationName}
+                </div>
+              </div>
+
+              {/* Graphical Motion Track Line */}
+              <div className="relative pt-2 pb-6">
+                <div className="h-2 bg-black/10 dark:bg-white/10 rounded-full w-full relative overflow-hidden">
+                  <div 
+                    className="h-full bg-gradient-to-r from-emerald-500 via-blue-500 to-[#E53E3E] transition-all duration-700 ease-linear rounded-full"
+                    style={{
+                      width: `${Math.max(5, Math.min(98, (selectedTrain.currentStationIndex / (selectedTrain.stops.length - 1)) * 100))}%`
+                    }}
+                  />
+                </div>
+
+                {/* Train Locomotive Marker along Track */}
+                <div 
+                  className="absolute top-0 -mt-1 transform -translate-x-1/2 transition-all duration-700 ease-linear flex flex-col items-center pointer-events-none"
+                  style={{
+                    left: `${Math.max(5, Math.min(95, (selectedTrain.currentStationIndex / (selectedTrain.stops.length - 1)) * 100))}%`
+                  }}
+                >
+                  <div className="w-6 h-6 rounded-full bg-[#18181A] text-white flex items-center justify-center shadow-lg border border-amber-400 animate-bounce">
+                    <Train className="w-3.5 h-3.5 text-amber-400" />
+                  </div>
+                  <span className="text-[10px] font-mono-code font-black text-[#18181A] dark:text-[#f2f2f2] whitespace-nowrap mt-1">
+                    {selectedTrain.currentSpeedKmH} km/h
+                  </span>
+                </div>
+
+                {/* Origin and Destination Labels */}
+                <div className="flex justify-between text-[11px] font-bold text-[#18181A]/70 dark:text-[#f2f2f2]/60 mt-3 pt-2">
+                  <span>{selectedTrain.sourceName} ({selectedTrain.source})</span>
+                  <span className="text-center font-mono-code text-blue-600 dark:text-blue-400">
+                    Next: {selectedTrain.nextStationName}
+                  </span>
+                  <span>{selectedTrain.destinationName} ({selectedTrain.destination})</span>
+                </div>
+              </div>
+            </div>
+
             {/* In-depth Telemetry Strip */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
               <div className="p-3.5 sm:p-4 rounded-lg dark:rounded-none bg-[#F8F7F4] dark:bg-[#141416] border border-black/5 dark:border-white/5 text-xs">
