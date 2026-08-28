@@ -199,55 +199,76 @@ export const LiveTrainMap: React.FC<LiveTrainMapProps> = ({ train, onSelectStati
   };
 
   return (
-    <div className="relative isolate w-full h-full min-h-[460px] bg-slate-100 dark:bg-white/5 rounded-3xl dark:rounded-none overflow-hidden border border-slate-200 dark:border-white/10 shadow-md flex flex-col">
-      <div className="absolute top-3 left-3 right-3 z-10 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
-        <div className="bg-slate-900/95 dark:bg-black/90 backdrop-blur-md text-white px-3.5 py-2 rounded-2xl dark:rounded-none shadow-xl border border-slate-700/60 pointer-events-auto flex items-center gap-3 text-xs font-semibold">
-          <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
-            <span className="font-mono text-emerald-400 font-extrabold uppercase tracking-wide">LIVE GPS • MOVING</span>
+    <div className="relative isolate w-full h-full min-h-[360px] sm:min-h-[460px] bg-surface rounded-2xl sm:rounded-3xl overflow-hidden border border-border shadow-xs flex flex-col text-ink">
+      {/* Top telemetry bar & Quick Status */}
+      <div className="absolute top-2.5 left-2.5 right-2.5 sm:top-3 sm:left-3 sm:right-3 z-10 flex items-start justify-between gap-2 pointer-events-none">
+        <div className="bg-surface/95 backdrop-blur-md text-ink px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-xl sm:rounded-2xl shadow-lg border border-border pointer-events-auto flex items-center gap-2 sm:gap-3 text-[11px] sm:text-xs font-semibold max-w-[calc(100%-48px)] sm:max-w-none overflow-x-auto no-scrollbar">
+          <div className="flex items-center gap-1.5 font-mono-code shrink-0">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+            <span className="text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wide">
+              <span className="inline sm:hidden">LIVE</span>
+              <span className="hidden sm:inline">LIVE GPS • MOVING</span>
+            </span>
           </div>
-          <div className="h-3.5 w-px bg-slate-700"></div>
-          <div className="flex items-center gap-1 text-slate-200">
-            <Gauge className="w-3.5 h-3.5 text-blue-400" />
-            <span className="font-bold font-mono">{train.currentSpeedKmH} km/h</span>
+          <div className="h-3 w-px bg-border shrink-0"></div>
+          <div className="flex items-center gap-1 text-ink font-mono-code shrink-0">
+            <Gauge className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-accent" />
+            <span className="font-bold">{train.currentSpeedKmH} <span className="text-[10px] text-ink/60">km/h</span></span>
           </div>
-          <div className="h-3.5 w-px bg-slate-700"></div>
-          <div className="flex items-center gap-1 text-slate-200">
-            <Clock className="w-3.5 h-3.5 text-amber-400" />
-            <span>Delay: <strong className={`${train.currentDelayMinutes > 5 ? 'text-red-400' : 'text-emerald-400'} font-bold`}>
-              {train.currentDelayMinutes > 0 ? `+${train.currentDelayMinutes}m` : '0m (On Time)'}
-            </strong></span>
+          <div className="h-3 w-px bg-border shrink-0"></div>
+          <div className="flex items-center gap-1 text-ink shrink-0 font-mono-code">
+            <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-500" />
+            <span>
+              <span className="hidden sm:inline text-ink/60 font-normal">Delay: </span>
+              <strong className={train.currentDelayMinutes > 5 ? 'text-accent font-bold' : 'text-emerald-600 dark:text-emerald-400 font-bold'}>
+                {train.currentDelayMinutes > 0 ? `+${train.currentDelayMinutes}m` : '0m'}
+              </strong>
+            </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 pointer-events-auto">
+        {/* Floating Controls Toolbar */}
+        <div className="flex flex-col gap-1.5 pointer-events-auto shrink-0">
           <button
+            type="button"
             onClick={() => setIsFollowTrain(!isFollowTrain)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl dark:rounded-none shadow-md border text-xs font-bold transition-all cursor-pointer ${
+            title={isFollowTrain ? "Auto-following train (click to unlock)" : "Follow train camera"}
+            className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl border flex items-center justify-center cursor-pointer shadow-md transition-all ${
               isFollowTrain
-                ? 'bg-blue-600 text-white border-blue-700 shadow-blue-500/30'
-                : 'bg-white/95 dark:bg-[#1a1a1c]/95 text-slate-700 dark:text-[#f2f2f2] border-slate-200 dark:border-white/10 hover:bg-slate-50'
+                ? 'bg-accent text-on-accent border-accent'
+                : 'bg-surface/95 text-ink hover:text-accent border-border hover:bg-surface-dark'
             }`}
           >
-            <Crosshair className={`w-3.5 h-3.5 ${isFollowTrain ? 'animate-spin' : ''}`} />
-            <span>{isFollowTrain ? 'Camera Following Train' : 'Follow Train'}</span>
+            <Crosshair className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isFollowTrain ? 'animate-spin' : ''}`} />
+          </button>
+          <button 
+            type="button" 
+            onClick={handleFocusTrain} 
+            title="Focus on Train"
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-surface/95 hover:bg-surface-dark text-ink hover:text-accent border border-border flex items-center justify-center cursor-pointer shadow-md transition-colors"
+          >
+            <TrainIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          </button>
+          <button 
+            type="button" 
+            onClick={handleLocateUser} 
+            title="My Location"
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-surface/95 hover:bg-surface-dark text-ink hover:text-accent border border-border flex items-center justify-center cursor-pointer shadow-md transition-colors"
+          >
+            <LocateFixed className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isLocating ? 'animate-spin' : ''}`} />
+          </button>
+          <button 
+            type="button" 
+            onClick={handleFitRoute} 
+            title="Fit Entire Route"
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-surface/95 hover:bg-surface-dark text-ink hover:text-accent border border-border flex items-center justify-center cursor-pointer shadow-md transition-colors"
+          >
+            <Maximize2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </button>
         </div>
       </div>
 
-      <div className="absolute right-3 top-16 z-10 flex flex-col gap-1.5 pointer-events-auto">
-        <button type="button" onClick={handleFocusTrain} className="w-9 h-9 rounded-xl dark:rounded-none bg-white dark:bg-[#1a1a1c]/95 hover:bg-slate-50 text-slate-700 hover:text-blue-600 shadow-md border border-slate-200 flex items-center justify-center cursor-pointer">
-          <TrainIcon className="w-4 h-4" />
-        </button>
-        <button type="button" onClick={handleLocateUser} className="w-9 h-9 rounded-xl dark:rounded-none bg-white dark:bg-[#1a1a1c]/95 hover:bg-slate-50 text-slate-700 hover:text-blue-600 shadow-md border border-slate-200 flex items-center justify-center cursor-pointer">
-          <LocateFixed className={`w-4 h-4 ${isLocating ? 'animate-spin' : ''}`} />
-        </button>
-        <button type="button" onClick={handleFitRoute} className="w-9 h-9 rounded-xl dark:rounded-none bg-white dark:bg-[#1a1a1c]/95 hover:bg-slate-50 text-slate-700 hover:text-blue-600 shadow-md border border-slate-200 flex items-center justify-center cursor-pointer">
-          <Maximize2 className="w-4 h-4" />
-        </button>
-      </div>
-
-      <div className="w-full flex-1 z-0 min-h-[420px]">
+      <div className="w-full flex-1 z-0 min-h-[300px] sm:min-h-[400px]">
         <Map
           defaultZoom={6}
           defaultCenter={{ lat: train.currentLatitude, lng: train.currentLongitude }}
@@ -264,26 +285,26 @@ export const LiveTrainMap: React.FC<LiveTrainMapProps> = ({ train, onSelectStati
             const isCurrent = stop.status === 'CURRENT';
             const isNext = stop.status === 'NEXT';
 
-            let markerBg = 'bg-slate-700 text-white border-slate-800';
+            let markerBg = 'bg-slate-700 text-on-accent border-slate-800';
             let badgeLabel = `${index + 1}`;
             let sizeClass = 'w-7 h-7 text-[11px]';
 
             if (isOrigin) {
-              markerBg = 'bg-emerald-600 text-white border-emerald-800 shadow-emerald-500/30';
+              markerBg = 'bg-emerald-600 text-on-accent border-emerald-800 shadow-emerald-500/30';
               badgeLabel = 'SRC';
               sizeClass = 'w-8 h-8 text-[10px] font-black';
             } else if (isDestination) {
-              markerBg = 'bg-blue-600 text-white border-blue-900 shadow-blue-500/30';
+              markerBg = 'bg-blue-600 text-on-accent border-blue-900 shadow-blue-500/30';
               badgeLabel = 'DEST';
               sizeClass = 'w-8 h-8 text-[10px] font-black';
             } else if (isCurrent) {
-              markerBg = 'bg-blue-600 text-white border-blue-800 ring-4 ring-blue-300 animate-pulse';
+              markerBg = 'bg-blue-600 text-on-accent border-blue-800 ring-4 ring-blue-300 animate-pulse';
             } else if (isNext) {
               markerBg = stop.riskLevel === 'HIGH' 
-                ? 'bg-red-600 text-white border-red-800 ring-2 ring-red-300' 
-                : 'bg-amber-500 text-white border-amber-700 ring-2 ring-amber-200';
+                ? 'bg-red-600 text-on-accent border-red-800 ring-2 ring-red-300' 
+                : 'bg-amber-500 text-on-accent border-amber-700 ring-2 ring-amber-200';
             } else if (stop.status === 'DEPARTED') {
-              markerBg = 'bg-emerald-600/90 text-white border-emerald-700';
+              markerBg = 'bg-emerald-600/90 text-on-accent border-emerald-700';
             }
 
             return (
@@ -293,10 +314,10 @@ export const LiveTrainMap: React.FC<LiveTrainMapProps> = ({ train, onSelectStati
                 onClick={() => onSelectStation && onSelectStation(stop.stationCode)}
               >
                 <div className="relative flex items-center justify-center cursor-pointer group select-none">
-                  <div className={`${sizeClass} rounded-full ${markerBg} flex items-center justify-center font-bold shadow-md border-2 transition-transform duration-200 group-hover:scale-110`}>
+                  <div className={`${sizeClass} rounded-full ${markerBg} flex items-center justify-center font-bold  border-2 transition-transform duration-200 group-hover:scale-110`}>
                     {badgeLabel}
                   </div>
-                  <div className="absolute bottom-full mb-1.5 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-150 bg-slate-900 text-white text-[11px] font-bold px-2.5 py-1 rounded-md shadow-xl whitespace-nowrap border border-slate-700/80 z-50">
+                  <div className="absolute bottom-full mb-1.5 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-150 bg-slate-900 text-on-accent text-[11px] font-bold px-2.5 py-1 rounded-md shadow-xl whitespace-nowrap border border-slate-700/80 z-50">
                     <span className="text-blue-400 font-mono">{stop.stationCode}</span> • {stop.stationName}
                   </div>
                 </div>
@@ -312,7 +333,7 @@ export const LiveTrainMap: React.FC<LiveTrainMapProps> = ({ train, onSelectStati
               <div className="absolute w-14 h-14 rounded-full bg-blue-500/25 animate-ping pointer-events-none"></div>
               <div className="absolute w-10 h-10 rounded-full bg-blue-400/20 animate-pulse pointer-events-none"></div>
               <div 
-                className="relative w-11 h-11 rounded-full bg-[#0A192F] border-2 border-amber-400 text-white flex items-center justify-center shadow-2xl transition-transform duration-500 ease-out"
+                className="relative w-11 h-11 rounded-full bg-[#0A192F] border-2 border-amber-400 text-on-accent flex items-center justify-center shadow-2xl transition-transform duration-500 ease-out"
                 style={{ transform: `rotate(${Math.round(bearingAngle)}deg)` }}
               >
                 <div className="absolute -top-1.5 w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-b-[6px] border-b-amber-400"></div>
@@ -326,7 +347,7 @@ export const LiveTrainMap: React.FC<LiveTrainMapProps> = ({ train, onSelectStati
                   <circle cx="16" cy="15" r="1" fill="currentColor"></circle>
                 </svg>
               </div>
-              <div className="absolute -top-7 whitespace-nowrap bg-blue-600 text-white font-mono font-black text-[10px] px-2 py-0.5 rounded-full shadow-lg border border-blue-400 flex items-center gap-1 pointer-events-none">
+              <div className="absolute -top-7 whitespace-nowrap bg-blue-600 text-on-accent font-mono font-black text-[10px] px-2 py-0.5 rounded-full shadow-lg border border-blue-400 flex items-center gap-1 pointer-events-none">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse"></span>
                 <span>{train.trainNumber} • {train.currentSpeedKmH} km/h</span>
               </div>
@@ -337,8 +358,8 @@ export const LiveTrainMap: React.FC<LiveTrainMapProps> = ({ train, onSelectStati
             <AdvancedMarker position={{ lat: userLocation.lat, lng: userLocation.lng }} zIndex={950}>
               <div className="relative flex items-center justify-center">
                 <div className="absolute w-8 h-8 rounded-full bg-blue-500/30 animate-ping"></div>
-                <div className="relative w-7 h-7 rounded-full bg-blue-600 border-2 border-white text-white flex items-center justify-center shadow-lg">
-                  <svg className="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                <div className="relative w-7 h-7 rounded-full bg-blue-600 border-2 border-white text-on-accent flex items-center justify-center shadow-lg">
+                  <svg className="w-3.5 h-3.5 text-on-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                     <circle cx="12" cy="12" r="4" fill="currentColor"></circle>
                     <path d="M12 2v3m0 14v3m10-10h-3M5 12H2"></path>
                   </svg>
@@ -349,22 +370,22 @@ export const LiveTrainMap: React.FC<LiveTrainMapProps> = ({ train, onSelectStati
         </Map>
       </div>
 
-      <div className="bg-slate-950 text-white px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs z-10 border-t border-slate-800">
-        <div className="flex items-center gap-2">
-          <MapPin className="w-4 h-4 text-blue-400 shrink-0" />
-          <span className="text-slate-400">Position:</span>
-          <span className="font-bold text-slate-100 truncate max-w-sm">{train.currentLocationName}</span>
+      <div className="bg-surface/95 backdrop-blur-md text-ink px-3 sm:px-4 py-2 sm:py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-3 text-xs z-10 border-t border-border">
+        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+          <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-accent shrink-0" />
+          <span className="text-ink/50 text-[11px] sm:text-xs shrink-0">Position:</span>
+          <span className="font-bold text-ink truncate text-[11px] sm:text-xs">{train.currentLocationName}</span>
         </div>
 
-        <div className="flex items-center gap-4 text-slate-300 text-xs">
-          <div className="flex items-center gap-1.5">
-            <span className="text-slate-400">Next Station:</span>
-            <strong className="text-amber-400 font-bold">{train.nextStationName}</strong>
-            <span className="font-mono text-emerald-400 font-extrabold">({train.distanceToNextStationKm} km)</span>
+        <div className="flex items-center justify-between sm:justify-end gap-3 text-ink/80 text-[11px] sm:text-xs">
+          <div className="flex items-center gap-1.5 truncate">
+            <span className="text-ink/50 shrink-0">Next:</span>
+            <strong className="text-accent font-bold truncate">{train.nextStationName}</strong>
+            <span className="font-mono-code text-emerald-600 dark:text-emerald-400 font-bold shrink-0">({train.distanceToNextStationKm} km)</span>
           </div>
-          <div className="hidden sm:inline-flex items-center gap-1 text-slate-400 font-mono text-[11px]">
-            <span>Lat: {train.currentLatitude.toFixed(4)}</span>
-            <span>Lng: {train.currentLongitude.toFixed(4)}</span>
+          <div className="hidden md:inline-flex items-center gap-1 text-ink/50 font-mono-code text-[11px]">
+            <span>Lat: {train.currentLatitude.toFixed(3)}</span>
+            <span>Lng: {train.currentLongitude.toFixed(3)}</span>
           </div>
         </div>
       </div>

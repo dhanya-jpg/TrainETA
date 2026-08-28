@@ -21,6 +21,8 @@ import {
 } from 'lucide-react';
 import { AuthUser, UserRole } from '../../types';
 import { signInUser, signUpUser, signInWithGoogle } from '../../services/firebase';
+import { AmbientBackground } from '../layout/AmbientBackground';
+import { motion } from 'motion/react';
 
 interface LoginPageProps {
   onLoginSuccess: (user: AuthUser) => void;
@@ -52,8 +54,46 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     setSelectedRole(role);
     setErrorMessage(null);
     setSuccessMessage(null);
-    if (role === 'OPERATOR' && authMode === 'signup') {
+    if (role === 'OPERATOR') {
       setAuthMode('signin');
+      if (!email) setEmail('trainoperator@gmail.com');
+      if (!password) setPassword('eta161739');
+    } else {
+      if (email === 'trainoperator@gmail.com') setEmail('');
+      if (password === 'eta161739') setPassword('');
+    }
+  };
+
+  // Quick Demo Autofill & Login
+  const handleQuickLogin = async (role: UserRole) => {
+    setErrorMessage(null);
+    setSuccessMessage(null);
+    setIsSubmitting(true);
+    setSelectedRole(role);
+    setAuthMode('signin');
+
+    if (role === 'OPERATOR') {
+      setEmail('trainoperator@gmail.com');
+      setPassword('eta161739');
+      const res = await signInUser('trainoperator@gmail.com', 'eta161739', 'OPERATOR');
+      setIsSubmitting(false);
+      if (res.success && res.user) {
+        setSuccessMessage('Operator authorized successfully! Entering console...');
+        setTimeout(() => onLoginSuccess(res.user!), 300);
+      } else {
+        setErrorMessage(res.error || 'Failed to authenticate operator.');
+      }
+    } else {
+      setEmail('passenger@smarteta.in');
+      setPassword('passenger123');
+      const res = await signInUser('passenger@smarteta.in', 'passenger123', 'PASSENGER');
+      setIsSubmitting(false);
+      if (res.success && res.user) {
+        setSuccessMessage('Commuter signed in successfully!');
+        setTimeout(() => onLoginSuccess(res.user!), 300);
+      } else {
+        setErrorMessage(res.error || 'Failed to sign in commuter.');
+      }
     }
   };
 
@@ -147,43 +187,48 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   };
 
   return (
-    <div className="min-h-[100dvh] w-full bg-[#F8F7F4] dark:bg-[#111113] text-[#18181A] dark:text-[#f2f2f2] flex flex-col justify-between selection:bg-[#E53E3E] selection:text-white relative font-['Inter',sans-serif]">
-      
+    <div className="min-h-[100dvh] w-full bg-transparent text-ink flex flex-col justify-between selection:bg-accent selection:text-on-accent relative">
+      <AmbientBackground />
       {/* Top Header Bar */}
-      <header className="w-full border-b border-black/10 dark:border-white/10 bg-[#F8F7F4] dark:bg-[#111113] px-6 sm:px-10 py-5 flex items-center justify-between z-10">
+      <header className="w-full border-b border-border bg-surface/40 px-6 sm:px-10 py-5 flex items-center justify-between z-10 backdrop-blur-sm">
         <div className="flex items-center gap-3">
-          <div className="font-['Space_Mono',monospace] dark:font-['Syne',sans-serif] font-extrabold text-xl tracking-tight flex items-center gap-1.5 text-[#18181A] dark:text-[#f2f2f2]">
+          <div className="font-display font-extrabold text-xl tracking-tight flex items-center gap-1.5 text-ink">
             <span>SMART ETA</span>
           </div>
-          <span className="hidden sm:inline-block font-['Space_Mono',monospace] dark:font-['JetBrains_Mono',monospace] text-[9px] uppercase tracking-widest px-2 py-0.5 rounded bg-white dark:bg-[#1a1a1c]/5 text-[#18181A] dark:text-[#f2f2f2] font-bold border border-black/10 dark:border-white/10">
+          <span className="hidden sm:inline-block font-mono-code text-[9px] uppercase tracking-widest px-2 py-0.5 rounded bg-surface text-ink font-bold border border-border">
             PLATFORM AUTH
           </span>
         </div>
 
         <div className="flex items-center gap-3">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-sm bg-white dark:bg-[#1a1a1c] border border-black/10 dark:border-white/10 text-xs font-['Space_Mono',monospace] dark:font-['JetBrains_Mono',monospace] font-bold shadow-sm">
-            <span className="w-2 h-2 rounded-xl dark:rounded-none bg-[#E53E3E] animate-pulse" />
-            <span className="text-black/50 dark:text-black/50 dark:text-white/50">FIRESTORE:</span>
-            <span className="text-[#18181A] dark:text-[#f2f2f2]">CONNECTED</span>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-surface border border-border text-xs font-mono-code font-bold text-ink">
+            <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+            <span className="text-ink/50">FIRESTORE:</span>
+            <span className="text-accent">CONNECTED</span>
           </span>
         </div>
       </header>
 
       {/* Main Authentication Container */}
       <main className="flex-1 flex items-center justify-center p-4 sm:p-8 z-10 my-4">
-        <div className="w-full max-w-lg bg-white dark:bg-[#1a1a1c] border border-black/10 dark:border-white/10 rounded-xl dark:rounded-none p-6 sm:p-9 relative space-y-6">
+        <motion.div 
+          initial={{ opacity: 0, y: 20, rotateX: 10, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, rotateX: 0, scale: 1 }}
+          transition={{ duration: 0.6, type: "spring", bounce: 0.4 }}
+          className="w-full max-w-lg bg-surface/90 backdrop-blur-xl border border-border rounded-3xl p-6 sm:p-9 relative space-y-6 shadow-2xl"
+        >
           
           {/* Header & Meta */}
           <div>
-            <div className="font-['Space_Mono',monospace] dark:font-['JetBrains_Mono',monospace] text-[10px] uppercase tracking-widest text-black/50 dark:text-black/50 dark:text-white/50 font-bold mb-1">
+            <div className="font-mono-code text-[10px] uppercase tracking-widest text-ink/50 font-bold mb-1">
               AUTHENTICATION & ACCESS
             </div>
-            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight font-['Space_Mono',monospace] dark:font-['Syne',sans-serif] text-[#18181A] dark:text-[#f2f2f2] leading-tight uppercase">
+            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight font-display text-ink leading-tight uppercase">
               {selectedRole === 'OPERATOR' 
                 ? 'Operator Portal.' 
                 : (authMode === 'signin' ? 'Welcome Back.' : 'Create Account.')}
             </h1>
-            <p className="text-xs text-black/60 dark:text-white/60 font-medium mt-2">
+            <p className="text-xs text-ink/60 font-medium mt-2">
               {selectedRole === 'OPERATOR'
                 ? 'Authorized railway section controller credentials required.'
                 : (authMode === 'signin'
@@ -193,14 +238,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({
           </div>
 
           {/* Role Switcher Pill */}
-          <div className="bg-[#F8F7F4] dark:bg-[#141416] p-1 rounded-xl dark:rounded-none border border-black/10 dark:border-white/10 flex items-center text-xs">
+          <div className="bg-surface-dark p-1 rounded-2xl border border-border flex items-center text-xs">
             <button
               type="button"
               onClick={() => handleSelectRole('PASSENGER')}
-              className={`flex-1 py-2 px-3 rounded-xl dark:rounded-none font-['Space_Mono',monospace] dark:font-['JetBrains_Mono',monospace] text-[11px] uppercase tracking-wider font-bold transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer ${
+              className={`flex-1 py-2 px-3 rounded-xl font-mono-code text-[11px] uppercase tracking-wider font-bold transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer ${
                 selectedRole === 'PASSENGER'
-                  ? 'bg-[#E53E3E] text-black dark:text-white'
-                  : 'text-black/50 dark:text-black/50 dark:text-white/50 hover:text-black dark:text-white hover:bg-black/5 dark:hover:bg-white dark:bg-[#1a1a1c]/5'
+                  ? 'bg-accent text-on-accent shadow-xs'
+                  : 'text-ink/60 hover:text-ink hover:bg-surface'
               }`}
             >
               <User className="w-3.5 h-3.5" />
@@ -210,15 +255,15 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             <button
               type="button"
               onClick={() => handleSelectRole('OPERATOR')}
-              className={`flex-1 py-2 px-3 rounded-xl dark:rounded-none font-['Space_Mono',monospace] dark:font-['JetBrains_Mono',monospace] text-[11px] uppercase tracking-wider font-bold transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer ${
+              className={`flex-1 py-2 px-3 rounded-xl font-mono-code text-[11px] uppercase tracking-wider font-bold transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer ${
                 selectedRole === 'OPERATOR'
-                  ? 'bg-[#E53E3E] text-black dark:text-white'
-                  : 'text-black/50 dark:text-black/50 dark:text-white/50 hover:text-black dark:text-white hover:bg-black/5 dark:hover:bg-white dark:bg-[#1a1a1c]/5'
+                  ? 'bg-accent text-on-accent shadow-xs'
+                  : 'text-ink/60 hover:text-ink hover:bg-surface'
               }`}
             >
               <Radio className="w-3.5 h-3.5" />
               <span>Operator</span>
-              <span className="text-[9px] font-['Space_Mono',monospace] dark:font-['JetBrains_Mono',monospace] px-1.5 py-0.5 bg-black/20 text-black/90 dark:text-white/90 ml-1">
+              <span className="text-[9px] font-mono-code px-1.5 py-0.5 rounded bg-black/20 text-white ml-1">
                 Official
               </span>
             </button>
@@ -226,7 +271,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
           {/* Sign In vs Sign Up Tab Toggle (Passenger Only) */}
           {selectedRole === 'PASSENGER' && (
-            <div className="flex items-center justify-center gap-4 border-b border-black/10 dark:border-white/10 pb-3">
+            <div className="flex items-center justify-center gap-4 border-b border-border pb-3">
               <button
                 type="button"
                 onClick={() => {
@@ -234,10 +279,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   setErrorMessage(null);
                   setSuccessMessage(null);
                 }}
-                className={`font-['Space_Mono',monospace] dark:font-['JetBrains_Mono',monospace] text-xs uppercase tracking-widest font-bold pb-1 cursor-pointer transition-colors border-b-2 ${
+                className={`font-mono-code text-xs uppercase tracking-widest font-bold pb-1 cursor-pointer transition-colors border-b-2 ${
                   authMode === 'signin'
-                    ? 'text-[#E53E3E] border-[#E53E3E]'
-                    : 'text-black/40 dark:text-black/40 dark:text-white/40 border-transparent hover:text-black dark:text-white'
+                    ? 'text-accent border-accent'
+                    : 'text-ink/40 border-transparent hover:text-ink'
                 }`}
               >
                 Sign In
@@ -250,10 +295,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   setErrorMessage(null);
                   setSuccessMessage(null);
                 }}
-                className={`font-['Space_Mono',monospace] dark:font-['JetBrains_Mono',monospace] text-xs uppercase tracking-widest font-bold pb-1 cursor-pointer transition-colors border-b-2 ${
+                className={`font-mono-code text-xs uppercase tracking-widest font-bold pb-1 cursor-pointer transition-colors border-b-2 ${
                   authMode === 'signup'
-                    ? 'text-[#E53E3E] border-[#E53E3E]'
-                    : 'text-black/40 dark:text-black/40 dark:text-white/40 border-transparent hover:text-black dark:text-white'
+                    ? 'text-accent border-accent'
+                    : 'text-ink/40 border-transparent hover:text-ink'
                 }`}
               >
                 New Registration
@@ -261,19 +306,46 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             </div>
           )}
 
-          {/* Operator Notice */}
-          {selectedRole === 'OPERATOR' && (
-            <div className="p-3.5 bg-[#F8F7F4] dark:bg-[#141416] border border-black/10 dark:border-white/10 text-black/90 dark:text-white/90 text-xs flex items-center gap-3">
-              <KeyRound className="w-4 h-4 text-[#E53E3E] shrink-0" />
-              <span className="font-medium leading-relaxed">
-                <strong>Sign-in Only:</strong> Operator registration is restricted to designated Indian Railways Section Controllers.
-              </span>
+          {/* Operator Notice & Quick Login Pill */}
+          {selectedRole === 'OPERATOR' ? (
+            <div className="space-y-3">
+              <div className="p-3.5 bg-surface-dark border border-border rounded-xl text-ink text-xs flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <KeyRound className="w-4 h-4 text-accent shrink-0" />
+                  <span className="font-medium">
+                    Official Railway Section Controller credentials:
+                  </span>
+                </div>
+                <span className="font-mono-code text-[11px] px-2 py-0.5 rounded bg-accent/15 text-accent font-bold">
+                  trainoperator@gmail.com
+                </span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => handleQuickLogin('OPERATOR')}
+                disabled={isSubmitting || isGoogleSubmitting}
+                className="w-full py-2.5 px-4 bg-accent/15 hover:bg-accent hover:text-on-accent text-accent font-bold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer border border-accent/30 rounded-xl font-mono-code uppercase tracking-wider shadow-xs"
+              >
+                <Flame className="w-3.5 h-3.5" />
+                <span>1-Click Operator Quick Access (Official Credentials)</span>
+              </button>
             </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => handleQuickLogin('PASSENGER')}
+              disabled={isSubmitting || isGoogleSubmitting}
+              className="w-full py-2.5 px-4 bg-accent/15 hover:bg-accent hover:text-on-accent text-accent font-bold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer border border-accent/30 rounded-xl font-mono-code uppercase tracking-wider shadow-xs"
+            >
+              <Flame className="w-3.5 h-3.5" />
+              <span>1-Click Commuter Demo Access</span>
+            </button>
           )}
 
           {/* Error Message */}
           {errorMessage && (
-            <div className="p-3.5 bg-[#E53E3E]/10 border border-[#E53E3E]/30 text-[#E53E3E] text-xs font-bold flex items-center gap-2.5">
+            <div className="p-3.5 bg-accent/15 border border-accent/30 text-accent rounded-xl text-xs font-bold flex items-center gap-2.5 font-mono-code">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{errorMessage}</span>
             </div>
@@ -281,75 +353,75 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
           {/* Success Message */}
           {successMessage && (
-            <div className="p-3.5 bg-emerald-900/20 border border-emerald-500/30 text-emerald-400 text-xs font-bold flex items-center gap-2.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <div className="p-3.5 bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 rounded-xl text-xs font-bold flex items-center gap-2.5 font-mono-code">
+              <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
               <span>{successMessage}</span>
             </div>
           )}
 
-          {/* Google Sign-in Option for Passenger */}
-          {selectedRole === 'PASSENGER' && (
-            <div>
-              <button
-                type="button"
-                onClick={handleGoogleLogin}
-                disabled={isGoogleSubmitting || isSubmitting}
-                className="w-full py-2.5 px-4 bg-[#f2f2f2] hover:bg-white dark:bg-[#1a1a1c] text-[#111113] font-bold text-xs transition-all shadow-none flex items-center justify-center gap-3 cursor-pointer disabled:opacity-50 border-none font-['Space_Mono',monospace] dark:font-['JetBrains_Mono',monospace] uppercase tracking-wider"
-              >
-                <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
-                  <path
-                    fill="#4285F4"
-                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                  />
-                  <path
-                    fill="#34A853"
-                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                  />
-                  <path
-                    fill="#FBBC05"
-                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                  />
-                  <path
-                    fill="#EA4335"
-                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                  />
-                </svg>
-                <span>
-                  {isGoogleSubmitting
-                    ? 'Authenticating...'
-                    : authMode === 'signin'
-                    ? 'Continue with Google'
-                    : 'Sign up with Google'}
-                </span>
-              </button>
+          {/* Google Sign-in Option for BOTH Roles */}
+          <div>
+            <button
+              type="button"
+              onClick={handleGoogleLogin}
+              disabled={isGoogleSubmitting || isSubmitting}
+              className="w-full py-2.5 px-4 bg-surface hover:bg-surface-dark text-ink font-bold text-xs transition-all flex items-center justify-center gap-3 cursor-pointer disabled:opacity-50 border border-border rounded-xl font-mono-code uppercase tracking-wider shadow-sm"
+            >
+              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+                <path
+                  fill="#4285F4"
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                />
+                <path
+                  fill="#EA4335"
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                />
+              </svg>
+              <span>
+                {isGoogleSubmitting
+                  ? 'Authenticating with Google...'
+                  : selectedRole === 'OPERATOR'
+                  ? 'Sign in as Operator with Google'
+                  : authMode === 'signin'
+                  ? 'Continue with Google'
+                  : 'Sign up with Google'}
+              </span>
+            </button>
 
-              <div className="relative flex py-4 items-center">
-                <div className="flex-grow border-t border-black/10 dark:border-white/10"></div>
-                <span className="flex-shrink mx-3 text-[10px] font-['Space_Mono',monospace] dark:font-['JetBrains_Mono',monospace] font-bold text-black/40 dark:text-black/40 dark:text-white/40 uppercase tracking-widest">
-                  Or with email
-                </span>
-                <div className="flex-grow border-t border-black/10 dark:border-white/10"></div>
-              </div>
+            <div className="relative flex py-4 items-center">
+              <div className="flex-grow border-t border-border"></div>
+              <span className="flex-shrink mx-3 text-[10px] font-mono-code font-bold text-ink/40 uppercase tracking-widest">
+                Or with email credentials
+              </span>
+              <div className="flex-grow border-t border-border"></div>
             </div>
-          )}
+          </div>
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Full Name for Signup */}
             {authMode === 'signup' && selectedRole === 'PASSENGER' && (
               <div>
-                <label className="font-['Space_Mono',monospace] dark:font-['JetBrains_Mono',monospace] text-[10px] font-bold text-black/50 dark:text-black/50 dark:text-white/50 uppercase tracking-widest block mb-1">
+                <label className="font-mono-code text-[10px] font-bold text-ink/50 uppercase tracking-widest block mb-1">
                   Full Name
                 </label>
                 <div className="relative">
-                  <User className="w-4 h-4 text-black/40 dark:text-black/40 dark:text-white/40 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <User className="w-4 h-4 text-ink/40 absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="e.g. Aarav Sharma"
-                    className="w-full pl-10 pr-4 py-2.5 bg-[#F8F7F4] dark:bg-[#111113] border border-black/10 dark:border-white/10 focus:border-[#E53E3E] rounded-xl dark:rounded-none text-xs font-bold text-[#18181A] dark:text-[#f2f2f2] placeholder:text-black/40 dark:placeholder:text-black dark:text-white/30 focus:outline-none transition-colors"
+                    className="w-full pl-10 pr-4 py-2.5 bg-surface-dark border border-border focus:border-accent rounded-xl text-xs font-bold text-ink placeholder:text-ink/40 focus:outline-none transition-colors"
                   />
                 </div>
               </div>
@@ -357,18 +429,18 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
             {/* Email */}
             <div>
-              <label className="font-['Space_Mono',monospace] dark:font-['JetBrains_Mono',monospace] text-[10px] font-bold text-black/50 dark:text-black/50 dark:text-white/50 uppercase tracking-widest block mb-1">
+              <label className="font-mono-code text-[10px] font-bold text-ink/50 uppercase tracking-widest block mb-1">
                 {selectedRole === 'OPERATOR' ? 'Operator Email' : 'Email Address'}
               </label>
               <div className="relative">
-                <Mail className="w-4 h-4 text-black/40 dark:text-black/40 dark:text-white/40 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <Mail className="w-4 h-4 text-ink/40 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder={selectedRole === 'OPERATOR' ? 'trainoperator@gmail.com' : 'passenger@smarteta.in'}
-                  className="w-full pl-10 pr-4 py-2.5 bg-[#F8F7F4] dark:bg-[#111113] border border-black/10 dark:border-white/10 focus:border-[#E53E3E] rounded-xl dark:rounded-none text-xs font-bold text-[#18181A] dark:text-[#f2f2f2] placeholder:text-black/40 dark:placeholder:text-black dark:text-white/30 focus:outline-none transition-colors"
+                  className="w-full pl-10 pr-4 py-2.5 bg-surface-dark border border-border focus:border-accent rounded-xl text-xs font-bold text-ink placeholder:text-ink/40 focus:outline-none transition-colors"
                 />
               </div>
             </div>
@@ -376,27 +448,27 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             {/* Password */}
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="font-['Space_Mono',monospace] dark:font-['JetBrains_Mono',monospace] text-[10px] font-bold text-black/50 dark:text-black/50 dark:text-white/50 uppercase tracking-widest block">
+                <label className="font-mono-code text-[10px] font-bold text-ink/50 uppercase tracking-widest block">
                   {selectedRole === 'OPERATOR' ? 'Password' : 'Password'}
                 </label>
                 {authMode === 'signup' && (
-                  <span className="font-['Space_Mono',monospace] dark:font-['JetBrains_Mono',monospace] text-[9px] text-black/40 dark:text-black/40 dark:text-white/40">Min 6 chars</span>
+                  <span className="font-mono-code text-[9px] text-ink/40">Min 6 chars</span>
                 )}
               </div>
               <div className="relative">
-                <Lock className="w-4 h-4 text-black/40 dark:text-black/40 dark:text-white/40 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <Lock className="w-4 h-4 text-ink/40 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full pl-10 pr-10 py-2.5 bg-[#F8F7F4] dark:bg-[#111113] border border-black/10 dark:border-white/10 focus:border-[#E53E3E] rounded-xl dark:rounded-none text-xs font-bold text-[#18181A] dark:text-[#f2f2f2] placeholder:text-black/40 dark:placeholder:text-black dark:text-white/30 focus:outline-none transition-colors font-['Space_Mono',monospace] dark:font-['JetBrains_Mono',monospace]"
+                  className="w-full pl-10 pr-10 py-2.5 bg-surface-dark border border-border focus:border-accent rounded-xl text-xs font-bold text-ink placeholder:text-ink/40 focus:outline-none transition-colors font-mono-code"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-black/40 dark:text-black/40 dark:text-white/40 hover:text-black dark:text-white cursor-pointer"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-ink/40 hover:text-ink cursor-pointer"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -406,18 +478,18 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             {/* Confirm Password (Sign Up only) */}
             {authMode === 'signup' && selectedRole === 'PASSENGER' && (
               <div>
-                <label className="font-['Space_Mono',monospace] dark:font-['JetBrains_Mono',monospace] text-[10px] font-bold text-black/50 dark:text-black/50 dark:text-white/50 uppercase tracking-widest block mb-1">
+                <label className="font-mono-code text-[10px] font-bold text-ink/50 uppercase tracking-widest block mb-1">
                   Confirm Password
                 </label>
                 <div className="relative">
-                  <Lock className="w-4 h-4 text-black/40 dark:text-black/40 dark:text-white/40 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <Lock className="w-4 h-4 text-ink/40 absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <input
                     type={showPassword ? 'text' : 'password'}
                     required
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full pl-10 pr-4 py-2.5 bg-[#F8F7F4] dark:bg-[#111113] border border-black/10 dark:border-white/10 focus:border-[#E53E3E] rounded-xl dark:rounded-none text-xs font-bold text-[#18181A] dark:text-[#f2f2f2] placeholder:text-black/40 dark:placeholder:text-black dark:text-white/30 focus:outline-none transition-colors font-['Space_Mono',monospace] dark:font-['JetBrains_Mono',monospace]"
+                    className="w-full pl-10 pr-4 py-2.5 bg-surface-dark border border-border focus:border-accent rounded-xl text-xs font-bold text-ink placeholder:text-ink/40 focus:outline-none transition-colors font-mono-code"
                   />
                 </div>
               </div>
@@ -427,33 +499,33 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             {authMode === 'signup' && selectedRole === 'PASSENGER' && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                 <div>
-                  <label className="font-['Space_Mono',monospace] dark:font-['JetBrains_Mono',monospace] text-[10px] font-bold text-black/50 dark:text-black/50 dark:text-white/50 uppercase tracking-widest block mb-1">
+                  <label className="font-mono-code text-[10px] font-bold text-ink/50 uppercase tracking-widest block mb-1">
                     Phone (Optional)
                   </label>
                   <div className="relative">
-                    <Phone className="w-3.5 h-3.5 text-black/40 dark:text-black/40 dark:text-white/40 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <Phone className="w-3.5 h-3.5 text-ink/40 absolute left-3 top-1/2 -translate-y-1/2" />
                     <input
                       type="tel"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       placeholder="+91 98765 43210"
-                      className="w-full pl-9 pr-3 py-2 bg-[#F8F7F4] dark:bg-[#111113] border border-black/10 dark:border-white/10 rounded-xl dark:rounded-none text-xs font-bold text-[#18181A] dark:text-[#f2f2f2] focus:outline-none focus:border-[#E53E3E] transition-colors"
+                      className="w-full pl-9 pr-3 py-2 bg-surface-dark border border-border rounded-xl text-xs font-bold text-ink focus:outline-none focus:border-accent transition-colors"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="font-['Space_Mono',monospace] dark:font-['JetBrains_Mono',monospace] text-[10px] font-bold text-black/50 dark:text-black/50 dark:text-white/50 uppercase tracking-widest block mb-1">
+                  <label className="font-mono-code text-[10px] font-bold text-ink/50 uppercase tracking-widest block mb-1">
                     PNR / Ticket (Optional)
                   </label>
                   <div className="relative">
-                    <Ticket className="w-3.5 h-3.5 text-black/40 dark:text-black/40 dark:text-white/40 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <Ticket className="w-3.5 h-3.5 text-ink/40 absolute left-3 top-1/2 -translate-y-1/2" />
                     <input
                       type="text"
                       value={pnrOrTicket}
                       onChange={(e) => setPnrOrTicket(e.target.value)}
                       placeholder="e.g. 4829103948"
-                      className="w-full pl-9 pr-3 py-2 bg-[#F8F7F4] dark:bg-[#111113] border border-black/10 dark:border-white/10 rounded-xl dark:rounded-none text-xs font-bold text-[#18181A] dark:text-[#f2f2f2] focus:outline-none focus:border-[#E53E3E] transition-colors"
+                      className="w-full pl-9 pr-3 py-2 bg-surface-dark border border-border rounded-xl text-xs font-bold text-ink focus:outline-none focus:border-accent transition-colors"
                     />
                   </div>
                 </div>
@@ -465,7 +537,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
               <button
                 type="submit"
                 disabled={isSubmitting || isGoogleSubmitting}
-                className="w-full py-3 bg-[#E53E3E] hover:bg-red-700 text-black dark:text-white font-['Space_Mono',monospace] dark:font-['JetBrains_Mono',monospace] font-bold text-xs uppercase tracking-widest rounded-xl dark:rounded-none transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 border-none"
+                className="w-full py-3 bg-accent hover:opacity-90 text-on-accent font-mono-code font-bold text-xs uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 border-none shadow-sm"
               >
                 {isSubmitting ? (
                   <span>AUTHENTICATING...</span>
@@ -476,24 +548,24 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                         ? 'ENTER OPERATOR PORTAL' 
                         : (authMode === 'signin' ? 'SIGN IN' : 'COMPLETE REGISTRATION')}
                     </span>
-                    <ArrowRight className="w-4 h-4 text-black dark:text-white" />
+                    <ArrowRight className="w-4 h-4 text-on-accent" />
                   </>
                 )}
               </button>
             </div>
           </form>
 
-        </div>
+        </motion.div>
       </main>
 
       {/* Footer System Telemetry Status */}
-      <footer className="w-full border-t border-black/10 dark:border-white/10 bg-[#F8F7F4] dark:bg-[#111113] px-6 sm:px-10 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-black/50 dark:text-black/50 dark:text-white/50 z-10">
+      <footer className="w-full border-t border-border bg-surface/40 backdrop-blur-sm px-6 sm:px-10 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-ink/50 z-10">
         <div className="flex items-center gap-2 font-medium">
           <span>Western Railway Division</span>
           <span>•</span>
-          <span className="font-['Space_Mono',monospace] dark:font-['JetBrains_Mono',monospace] text-[11px] text-black dark:text-white/70">PROJECT: smart-eta-9966c</span>
+          <span className="font-mono-code text-[11px] text-ink/70">PROJECT: smart-eta-9966c</span>
         </div>
-        <div className="font-['Space_Mono',monospace] dark:font-['JetBrains_Mono',monospace] text-[10px] uppercase tracking-wider font-bold text-[#E53E3E]">
+        <div className="font-mono-code text-[10px] uppercase tracking-wider font-bold text-accent">
           SECURE FIRESTORE PERSISTENCE ENABLED
         </div>
       </footer>

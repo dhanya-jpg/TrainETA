@@ -12,7 +12,7 @@ import {
   Cell 
 } from 'recharts';
 import { TrainData } from '../../types';
-import { TrendingUp, PieChart as PieIcon, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { TrendingUp, PieChart as PieIcon } from 'lucide-react';
 
 interface DelayForecastChartProps {
   train: TrainData;
@@ -34,32 +34,32 @@ export const DelayForecastChart: React.FC<DelayForecastChartProps> = ({ train })
   const riskData = [
     { name: 'Low Risk (<5 min)', value: 20, color: '#10B981' },
     { name: 'Medium Risk (5-15 min)', value: 55, color: '#F59E0B' },
-    { name: 'High Risk (>15 min)', value: 25, color: '#EF4444' },
+    { name: 'High Risk (>15 min)', value: 25, color: 'var(--color-accent, #E53E3E)' },
   ];
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 text-ink">
       {/* Left 2 Cols: Line Chart for Delay Progression */}
-      <div className="lg:col-span-2 bg-white dark:bg-[#1a1a1c] p-5 lg:p-6 rounded-2xl dark:rounded-none border border-slate-200 dark:border-white/10 shadow-xs space-y-4">
+      <div className="lg:col-span-2 bg-surface p-5 lg:p-6 rounded-3xl border border-border space-y-4 shadow-xs">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-blue-600" />
-              <h3 className="text-base font-extrabold text-slate-900 dark:text-[#f2f2f2] tracking-tight">
+              <TrendingUp className="w-5 h-5 text-accent" />
+              <h3 className="text-base font-bold font-display text-ink tracking-tight">
                 Sectional Delay Progression Across Stations
               </h3>
             </div>
-            <p className="text-xs text-slate-500 dark:text-[#f2f2f2]/50 font-medium mt-0.5">
+            <p className="text-xs text-ink/60 font-medium mt-0.5">
               Accumulated delay vs downstream engineering recovery slope.
             </p>
           </div>
 
-          <div className="flex items-center gap-2 bg-slate-50 dark:bg-[#141416] px-3 py-1.5 rounded-xl dark:rounded-none border border-slate-200 dark:border-white/10 text-xs">
-            <span className="text-slate-500 dark:text-[#f2f2f2]/50 font-bold">Current:</span>
-            <span className="font-black text-amber-600">+{train.currentDelayMinutes} min</span>
-            <span className="text-slate-300">|</span>
-            <span className="text-slate-500 dark:text-[#f2f2f2]/50 font-bold">Dest. Forecast:</span>
-            <span className="font-black text-blue-600">+{train.destinationPredictedDelay} min</span>
+          <div className="flex items-center gap-2 bg-surface-dark px-3 py-1.5 rounded-xl border border-border text-xs font-mono-code">
+            <span className="text-ink/60 font-bold">Current:</span>
+            <span className="font-bold text-amber-500">+{train.currentDelayMinutes} min</span>
+            <span className="text-border">|</span>
+            <span className="text-ink/60 font-bold">Dest. Forecast:</span>
+            <span className="font-bold text-accent">+{train.destinationPredictedDelay} min</span>
           </div>
         </div>
 
@@ -67,16 +67,18 @@ export const DelayForecastChart: React.FC<DelayForecastChartProps> = ({ train })
         <div className="h-64 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData} margin={{ top: 15, right: 20, left: -10, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="opacity-10" vertical={false} />
               <XAxis 
                 dataKey="name" 
-                tick={{ fill: '#64748B', fontSize: 11, fontWeight: 700 }}
-                axisLine={{ stroke: '#CBD5E1' }}
+                tick={{ fill: 'currentColor', fontSize: 11, fontWeight: 700 }}
+                className="text-ink/60"
+                axisLine={{ stroke: 'currentColor', className: 'opacity-20' }}
                 tickLine={false}
               />
               <YAxis 
-                tick={{ fill: '#64748B', fontSize: 11, fontWeight: 700 }}
-                axisLine={{ stroke: '#CBD5E1' }}
+                tick={{ fill: 'currentColor', fontSize: 11, fontWeight: 700 }}
+                className="text-ink/60"
+                axisLine={{ stroke: 'currentColor', className: 'opacity-20' }}
                 tickLine={false}
                 unit="m"
               />
@@ -85,12 +87,12 @@ export const DelayForecastChart: React.FC<DelayForecastChartProps> = ({ train })
                   if (active && payload && payload.length) {
                     const data = payload[0].payload;
                     return (
-                      <div className="bg-slate-900 dark:bg-white text-white p-3 rounded-xl dark:rounded-none shadow-xl text-xs font-semibold space-y-1">
-                        <div className="font-extrabold text-amber-400">{data.fullName} ({data.stationCode})</div>
+                      <div className="bg-surface border border-border text-ink p-3 rounded-xl shadow-xl text-xs font-semibold space-y-1">
+                        <div className="font-bold text-accent">{data.fullName} ({data.stationCode})</div>
                         <div>Scheduled: {data.scheduledArrival}</div>
-                        <div>Predicted ETA: <strong className="text-blue-400">{data.predictedETA}</strong></div>
-                        <div>Delay: <span className="text-amber-400 font-bold">+{data.delay} min</span></div>
-                        <div className="text-[10px] text-slate-400 dark:text-[#f2f2f2]/40">Status: {data.status}</div>
+                        <div>Predicted ETA: <strong className="text-accent">{data.predictedETA}</strong></div>
+                        <div>Delay: <span className="text-amber-500 font-bold">+{data.delay} min</span></div>
+                        <div className="text-[10px] text-ink/50 font-mono-code">Status: {data.status}</div>
                       </div>
                     );
                   }
@@ -100,10 +102,10 @@ export const DelayForecastChart: React.FC<DelayForecastChartProps> = ({ train })
               <Line 
                 type="monotone" 
                 dataKey="delay" 
-                stroke="#2563EB" 
+                stroke="var(--color-accent, #E53E3E)" 
                 strokeWidth={3.5}
-                dot={{ r: 5, fill: '#2563EB', stroke: '#FFFFFF', strokeWidth: 2 }}
-                activeDot={{ r: 7, fill: '#1D4ED8', stroke: '#DBEAFE', strokeWidth: 3 }}
+                dot={{ r: 5, fill: 'var(--color-accent, #E53E3E)', stroke: 'var(--color-surface, #FFFFFF)', strokeWidth: 2 }}
+                activeDot={{ r: 7, fill: 'var(--color-accent, #E53E3E)', stroke: 'var(--color-surface, #FFFFFF)', strokeWidth: 3 }}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -111,15 +113,15 @@ export const DelayForecastChart: React.FC<DelayForecastChartProps> = ({ train })
       </div>
 
       {/* Right 1 Col: Delay Risk Donut */}
-      <div className="bg-white dark:bg-[#1a1a1c] p-5 lg:p-6 rounded-2xl dark:rounded-none border border-slate-200 dark:border-white/10 shadow-xs flex flex-col justify-between space-y-4">
+      <div className="bg-surface p-5 lg:p-6 rounded-3xl border border-border flex flex-col justify-between space-y-4 shadow-xs">
         <div>
           <div className="flex items-center gap-2">
-            <PieIcon className="w-5 h-5 text-indigo-600" />
-            <h3 className="text-base font-extrabold text-slate-900 dark:text-[#f2f2f2] tracking-tight">
+            <PieIcon className="w-5 h-5 text-accent" />
+            <h3 className="text-base font-bold font-display text-ink tracking-tight">
               Route Delay Risk Assessment
             </h3>
           </div>
-          <p className="text-xs text-slate-500 dark:text-[#f2f2f2]/50 font-medium mt-0.5">
+          <p className="text-xs text-ink/60 font-medium mt-0.5">
             XGBoost probability distribution across remaining corridors.
           </p>
         </div>
@@ -142,20 +144,20 @@ export const DelayForecastChart: React.FC<DelayForecastChartProps> = ({ train })
             </PieChart>
           </ResponsiveContainer>
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-            <span className="text-xs font-bold text-slate-400 dark:text-[#f2f2f2]/40 uppercase">Primary Risk</span>
-            <span className="text-lg font-black text-amber-600">{train.destinationRisk}</span>
+            <span className="text-xs font-mono-code font-bold text-ink/50 uppercase">Primary Risk</span>
+            <span className="text-lg font-bold font-mono-code text-accent">{train.destinationRisk}</span>
           </div>
         </div>
 
         {/* Risk Legend */}
-        <div className="space-y-2 pt-2 border-t border-slate-100 text-xs">
+        <div className="space-y-2 pt-2 border-t border-border text-xs">
           {riskData.map((item) => (
             <div key={item.name} className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
-                <span className="font-bold text-slate-700 dark:text-[#f2f2f2]/80">{item.name}</span>
+                <span className="font-bold text-ink/80">{item.name}</span>
               </div>
-              <span className="font-mono font-black text-slate-900 dark:text-[#f2f2f2]">{item.value}%</span>
+              <span className="font-mono-code font-bold text-ink">{item.value}%</span>
             </div>
           ))}
         </div>

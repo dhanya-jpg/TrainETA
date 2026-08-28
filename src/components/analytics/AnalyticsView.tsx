@@ -5,10 +5,6 @@ import {
   Cpu, 
   TrendingUp, 
   CheckCircle2, 
-  Zap, 
-  ShieldCheck, 
-  BarChart2,
-  HelpCircle
 } from 'lucide-react';
 import { 
   ResponsiveContainer, 
@@ -18,7 +14,6 @@ import {
   YAxis, 
   Tooltip, 
   CartesianGrid,
-  Legend
 } from 'recharts';
 import { AnalyticsSummary } from '../../types';
 
@@ -26,12 +21,12 @@ interface AnalyticsViewProps {
   analytics: AnalyticsSummary;
 }
 
-export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ analytics }) => {
+export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ analytics: _analytics }) => {
   const modelBenchmarks = [
-    { name: 'XGBoost (Active)', mae: 3.9, rmse: 5.4, r2: 0.94, latencyMs: 18, color: '#2563EB' },
-    { name: 'Random Forest', mae: 5.8, rmse: 7.9, r2: 0.88, latencyMs: 42, color: '#64748B' },
-    { name: 'Gradient Boosting', mae: 4.6, rmse: 6.2, r2: 0.91, latencyMs: 35, color: '#94A3B8' },
-    { name: 'Linear Regression', mae: 11.2, rmse: 14.8, r2: 0.69, latencyMs: 4, color: '#CBD5E1' },
+    { name: 'XGBoost (Active)', mae: 3.9, rmse: 5.4, r2: 0.94, latencyMs: 18 },
+    { name: 'Random Forest', mae: 5.8, rmse: 7.9, r2: 0.88, latencyMs: 42 },
+    { name: 'Gradient Boosting', mae: 4.6, rmse: 6.2, r2: 0.91, latencyMs: 35 },
+    { name: 'Linear Regression', mae: 11.2, rmse: 14.8, r2: 0.69, latencyMs: 4 },
   ];
 
   const bottleneckData = [
@@ -43,19 +38,19 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ analytics }) => {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-ink">
       {/* Top Banner */}
-      <div className="bg-white dark:bg-[#1a1a1c] p-6 rounded-2xl dark:rounded-none border border-slate-200 dark:border-white/10 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-surface p-6 rounded-3xl border border-border shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl dark:rounded-none bg-blue-50 text-blue-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-accent/15 text-accent flex items-center justify-center">
               <BarChart3 className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-xl font-black text-slate-900 dark:text-[#f2f2f2] tracking-tight">
+              <h2 className="text-xl font-display font-bold text-ink tracking-tight">
                 ML Model Benchmarks & Route Bottleneck Analytics
               </h2>
-              <p className="text-xs text-slate-500 dark:text-[#f2f2f2]/50 font-medium">
+              <p className="text-xs text-ink/60 font-medium">
                 XGBoost regressor validation against traditional regression baselines on Indian Railways operational historical logs.
               </p>
             </div>
@@ -63,8 +58,8 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ analytics }) => {
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="bg-emerald-50 text-emerald-800 border border-emerald-200 px-3.5 py-1.5 rounded-xl dark:rounded-none text-xs font-bold flex items-center gap-1.5">
-            <Target className="w-4 h-4 text-emerald-600" />
+          <div className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 px-3.5 py-1.5 rounded-xl text-xs font-mono-code font-bold flex items-center gap-1.5">
+            <Target className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             <span>Overall Fleet MAE: <strong>±3.9 min</strong></span>
           </div>
         </div>
@@ -73,13 +68,13 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ analytics }) => {
       {/* Model Benchmark Comparison Table & Chart */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left: Model Benchmark Table */}
-        <div className="lg:col-span-6 bg-white dark:bg-[#1a1a1c] p-6 rounded-2xl dark:rounded-none border border-slate-200 dark:border-white/10 shadow-xs space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <span className="text-xs font-black text-slate-900 dark:text-[#f2f2f2] uppercase tracking-wider flex items-center gap-2">
-              <Cpu className="w-4 h-4 text-blue-600" />
+        <div className="lg:col-span-6 bg-surface p-6 rounded-3xl border border-border shadow-xs space-y-4">
+          <div className="flex items-center justify-between border-b border-border pb-3">
+            <span className="text-xs font-bold text-ink uppercase tracking-wider flex items-center gap-2 font-mono-code">
+              <Cpu className="w-4 h-4 text-accent" />
               Machine Learning Model Evaluation
             </span>
-            <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
+            <span className="text-[11px] font-mono-code font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30">
               XGBoost Selected
             </span>
           </div>
@@ -87,7 +82,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ analytics }) => {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead>
-                <tr className="bg-slate-50 dark:bg-[#141416] border-b border-slate-200 dark:border-white/10 text-slate-400 dark:text-[#f2f2f2]/40 font-bold uppercase text-[10px]">
+                <tr className="bg-surface-dark border-b border-border text-ink/50 font-mono-code font-bold uppercase text-[10px]">
                   <th className="py-2.5 px-3">Algorithm</th>
                   <th className="py-2.5 px-3">MAE (min)</th>
                   <th className="py-2.5 px-3">RMSE</th>
@@ -95,36 +90,36 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ analytics }) => {
                   <th className="py-2.5 px-3 text-right">Inference</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 font-medium">
+              <tbody className="divide-y divide-border font-medium">
                 {modelBenchmarks.map((m, idx) => (
-                  <tr key={m.name} className={idx === 0 ? 'bg-blue-50/60 font-bold text-blue-900' : 'hover:bg-slate-50 dark:bg-[#141416]'}>
+                  <tr key={m.name} className={idx === 0 ? 'bg-accent/10 font-bold text-accent' : 'hover:bg-surface-dark transition-colors'}>
                     <td className="py-3 px-3 flex items-center gap-2">
-                      {idx === 0 && <CheckCircle2 className="w-3.5 h-3.5 text-blue-600 shrink-0" />}
+                      {idx === 0 && <CheckCircle2 className="w-3.5 h-3.5 text-accent shrink-0" />}
                       <span>{m.name}</span>
                     </td>
-                    <td className="py-3 px-3 font-mono font-bold">{m.mae}m</td>
-                    <td className="py-3 px-3 font-mono">{m.rmse}m</td>
-                    <td className="py-3 px-3 font-mono">{m.r2}</td>
-                    <td className="py-3 px-3 text-right font-mono text-slate-500 dark:text-[#f2f2f2]/50">{m.latencyMs} ms</td>
+                    <td className="py-3 px-3 font-mono-code font-bold">{m.mae}m</td>
+                    <td className="py-3 px-3 font-mono-code">{m.rmse}m</td>
+                    <td className="py-3 px-3 font-mono-code">{m.r2}</td>
+                    <td className="py-3 px-3 text-right font-mono-code text-ink/60">{m.latencyMs} ms</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
 
-          <p className="text-[11px] text-slate-500 dark:text-[#f2f2f2]/50 leading-relaxed font-medium">
-            The <strong>XGBoost Dynamic Residual Regressor</strong> achieves an R² score of <strong>0.94</strong> and reduces mean absolute arrival prediction error to <strong>±3.9 minutes</strong>, outperforming linear models by 65%.
+          <p className="text-[11px] text-ink/60 leading-relaxed font-medium">
+            The <strong className="text-ink">XGBoost Dynamic Residual Regressor</strong> achieves an R² score of <strong className="text-ink">0.94</strong> and reduces mean absolute arrival prediction error to <strong className="text-accent">±3.9 minutes</strong>, outperforming linear models by 65%.
           </p>
         </div>
 
         {/* Right: Station Bottleneck Delay Bar Chart */}
-        <div className="lg:col-span-6 bg-white dark:bg-[#1a1a1c] p-6 rounded-2xl dark:rounded-none border border-slate-200 dark:border-white/10 shadow-xs space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <span className="text-xs font-black text-slate-900 dark:text-[#f2f2f2] uppercase tracking-wider flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-amber-600" />
+        <div className="lg:col-span-6 bg-surface p-6 rounded-3xl border border-border shadow-xs space-y-4">
+          <div className="flex items-center justify-between border-b border-border pb-3">
+            <span className="text-xs font-bold text-ink uppercase tracking-wider flex items-center gap-2 font-mono-code">
+              <TrendingUp className="w-4 h-4 text-accent" />
               Route Junction Bottlenecks (Avg Delay Added)
             </span>
-            <span className="text-[10px] font-bold text-slate-400 dark:text-[#f2f2f2]/40">
+            <span className="text-[10px] font-mono-code font-bold text-ink/50">
               HISTORICAL 30-DAY
             </span>
           </div>
@@ -132,16 +127,18 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ analytics }) => {
           <div className="h-60 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={bottleneckData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="opacity-10" vertical={false} />
                 <XAxis 
                   dataKey="station" 
-                  tick={{ fill: '#64748B', fontSize: 10, fontWeight: 700 }}
-                  axisLine={{ stroke: '#CBD5E1' }}
+                  tick={{ fill: 'currentColor', fontSize: 10, fontWeight: 700 }}
+                  className="text-ink/60"
+                  axisLine={{ stroke: 'currentColor', className: 'opacity-20' }}
                   tickLine={false}
                 />
                 <YAxis 
-                  tick={{ fill: '#64748B', fontSize: 10, fontWeight: 700 }}
-                  axisLine={{ stroke: '#CBD5E1' }}
+                  tick={{ fill: 'currentColor', fontSize: 10, fontWeight: 700 }}
+                  className="text-ink/60"
+                  axisLine={{ stroke: 'currentColor', className: 'opacity-20' }}
                   tickLine={false}
                   unit="m"
                 />
@@ -150,22 +147,22 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ analytics }) => {
                     if (active && payload && payload.length) {
                       const d = payload[0].payload;
                       return (
-                        <div className="bg-slate-900 dark:bg-white text-white p-2.5 rounded-xl dark:rounded-none text-xs space-y-1">
-                          <div className="font-extrabold text-amber-400">{d.station}</div>
-                          <div>Avg Delay Added: <strong className="text-blue-400">+{d.avgDelay} min</strong></div>
-                          <div>Bottleneck Occurrences: {d.occurrences}</div>
+                        <div className="bg-surface border border-border text-ink p-3 rounded-xl text-xs space-y-1 shadow-lg">
+                          <div className="font-bold text-accent">{d.station}</div>
+                          <div>Avg Delay Added: <strong className="text-accent">+{d.avgDelay} min</strong></div>
+                          <div className="text-ink/60">Bottleneck Occurrences: {d.occurrences}</div>
                         </div>
                       );
                     }
                     return null;
                   }}
                 />
-                <Bar dataKey="avgDelay" fill="#2563EB" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="avgDelay" fill="var(--color-accent, #E53E3E)" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
 
-          <p className="text-[11px] text-slate-500 dark:text-[#f2f2f2]/50 font-medium">
+          <p className="text-[11px] text-ink/60 font-medium">
             Vadodara (BRC) and Surat (ST) represent key junction bottlenecks due to yard crossover interlocks and freight rake crossing precedence.
           </p>
         </div>

@@ -1203,7 +1203,9 @@ export const ALL_INDIAN_TRAIN_TEMPLATES: TrainTemplate[] = [
   }
 ];
 
-// Helper to build realistic stops & calculations
+import { MLTrainPredictionModel } from '../services/etaPredictionService';
+
+// Helper to build realistic railway route distances with track curvature calibration
 function calculateDistanceBetween(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371; // Earth radius in km
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
@@ -1215,11 +1217,13 @@ function calculateDistanceBetween(lat1: number, lon1: number, lat2: number, lon2
       Math.sin(dLon / 2) *
       Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return Math.round(R * c);
+  const geodesicDist = R * c;
+  // Rail lines have curves/alignment deviation; calibrate by 1.12x
+  return Math.max(30, Math.round(geodesicDist * 1.12));
 }
 
 function formatMinutesToTime(totalMinutes: number): string {
-  const normalized = (totalMinutes + 1440) % 1440;
+  const normalized = ((Math.round(totalMinutes) % 1440) + 1440) % 1440;
   const hrs = Math.floor(normalized / 60);
   const mins = Math.floor(normalized % 60);
   return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
@@ -1238,7 +1242,7 @@ export function generateAllRunningTrains(referenceDate: Date = new Date()): Trai
     const source = routeStationsGeo[0];
     const destination = routeStationsGeo[routeStationsGeo.length - 1];
 
-    // Compute cumulative distances
+    // Compute cumulative distances along the railway corridor
     let cumDist = 0;
     const distances: number[] = [0];
     for (let i = 1; i < routeStationsGeo.length; i++) {
@@ -1248,13 +1252,13 @@ export function generateAllRunningTrains(referenceDate: Date = new Date()): Trai
         routeStationsGeo[i].lat,
         routeStationsGeo[i].lng
       );
-      cumDist += Math.max(25, segDist);
+      cumDist += segDist;
       distances.push(cumDist);
     }
     const totalDistanceKm = cumDist;
 
     // Determine current position based on progressPercent
-    const currentProgressDist = (tmpl.progressPercent / 100) * totalDistanceKm;
+    const currentProgressDist = Math.max(0, Math.min(totalDistanceKm, (tmpl.progressPercent / 100) * totalDistanceKm));
     let currStationIndex = 0;
     for (let i = 0; i < distances.length - 1; i++) {
       if (currentProgressDist >= distances[i]) {
@@ -1271,22 +1275,22 @@ export function generateAllRunningTrains(referenceDate: Date = new Date()): Trai
     const segSpan = Math.max(1, segEndDist - segStartDist);
     const segRatio = Math.max(0, Math.min(1, (currentProgressDist - segStartDist) / segSpan));
 
-    const currentLatitude = Number((currStnGeo.lat + (nextStnGeo.lat - currStnGeo.lat) * segRatio).toFixed(4));
-    const currentLongitude = Number((currStnGeo.lng + (nextStnGeo.lng - currStnGeo.lng) * segRatio).toFixed(4));
-    const distanceToNextStationKm = Math.max(5, Math.round(segEndDist - currentProgressDist));
+    const currentLatitude = Number((currStnGeo.lat + (nextStnGeo.lat - currStnGeo.lat) * segRatio).toFixed(5));
+    const currentLongitude = Number((currStnGeo.lng + (nextStnGeo.lng - currStnGeo.lng) * segRatio).toFixed(5));
+    const distanceToNextStationKm = Math.max(0, Math.round((segEndDist - currentProgressDist) * 10) / 10);
+    const distanceFromPrevStationKm = Math.max(0, Math.round((currentProgressDist - segStartDist) * 10) / 10);
 
     // Calculate realistic total journey duration based on distance and average speed
-    const avgOperationalSpeed = tmpl.maxSpeedKmH * 0.82;
+    const avgOperationalSpeed = Math.max(60, tmpl.maxSpeedKmH * 0.82);
     const totalJourneyMinutes = Math.round((totalDistanceKm / avgOperationalSpeed) * 60) + (routeStationsGeo.length - 1) * 4;
     
-    // In real-time tracking, a train running currently at progressPercent has been travelling for:
-    const elapsedJourneyMinutes = Math.round((tmpl.progressPercent / 100) * totalJourneyMinutes);
     // Origin scheduled departure time in minutes from midnight:
-    const originSchedDepMinutes = (currentTotalMinutesOfDay - elapsedJourneyMinutes - tmpl.currentDelayMinutes + 14400) % 1440;
+    const elapsedJourneyMinutes = Math.round((tmpl.progressPercent / 100) * totalJourneyMinutes);
+    const originSchedDepMinutes = ((currentTotalMinutesOfDay - elapsedJourneyMinutes - tmpl.currentDelayMinutes + 14400) % 1440 + 1440) % 1440;
 
-    // Construct realistic stops
+    // Construct base stops timetable
     let runningSchedMins = originSchedDepMinutes;
-    const stops: StationStop[] = routeStationsGeo.map((stn, idx) => {
+    const baseStops: StationStop[] = routeStationsGeo.map((stn, idx) => {
       const dist = distances[idx];
       const prevDist = idx > 0 ? distances[idx - 1] : 0;
       const legDist = dist - prevDist;
@@ -1297,33 +1301,6 @@ export function generateAllRunningTrains(referenceDate: Date = new Date()): Trai
       const schedDep = (schedArr + haltMins) % 1440;
       runningSchedMins = schedDep;
 
-      // Predict delays
-      let predictedDelay = 0;
-      let status: 'DEPARTED' | 'CURRENT' | 'NEXT' | 'UPCOMING' = 'UPCOMING';
-
-      if (idx < currStationIndex) {
-        status = 'DEPARTED';
-        predictedDelay = Math.max(0, tmpl.currentDelayMinutes - (currStationIndex - idx) * 2);
-      } else if (idx === currStationIndex) {
-        status = segRatio > 0.85 ? 'CURRENT' : 'DEPARTED';
-        predictedDelay = tmpl.currentDelayMinutes;
-      } else if (idx === nextStationIndex) {
-        status = 'NEXT';
-        predictedDelay = tmpl.currentDelayMinutes;
-      } else {
-        status = 'UPCOMING';
-        // ML delay recovery / accumulation model
-        const extraSlackRecovery = Math.round((idx - nextStationIndex) * 1.5);
-        predictedDelay = Math.max(0, tmpl.currentDelayMinutes - extraSlackRecovery);
-      }
-
-      const predArr = (schedArr + predictedDelay) % 1440;
-      const predDep = (schedDep + predictedDelay) % 1440;
-      const confScore = Math.max(82, Math.min(99, 99 - (idx - currStationIndex) * 3));
-
-      const spread = Math.max(2, Math.round((100 - confScore) * 0.4));
-      const etaRange = `${formatMinutesToTime(predArr - spread)} - ${formatMinutesToTime(predArr + spread)}`;
-
       return {
         stationCode: stn.code,
         stationName: stn.name,
@@ -1332,64 +1309,22 @@ export function generateAllRunningTrains(referenceDate: Date = new Date()): Trai
         longitude: stn.lng,
         scheduledArrival: formatMinutesToTime(schedArr),
         scheduledDeparture: formatMinutesToTime(schedDep),
-        predictedArrival: formatMinutesToTime(predArr),
-        predictedDeparture: formatMinutesToTime(predDep),
-        predictedDelayMinutes: predictedDelay,
-        confidenceScore: confScore,
-        etaRange,
-        riskLevel: predictedDelay > 20 ? 'HIGH' : predictedDelay > 8 ? 'MEDIUM' : 'LOW',
-        status,
+        predictedArrival: formatMinutesToTime(schedArr),
+        predictedDeparture: formatMinutesToTime(schedDep),
+        predictedDelayMinutes: tmpl.currentDelayMinutes,
+        confidenceScore: 95,
+        etaRange: `${formatMinutesToTime(schedArr)} - ${formatMinutesToTime(schedArr)}`,
+        riskLevel: 'LOW',
+        status: idx < currStationIndex ? 'DEPARTED' : idx === currStationIndex ? 'CURRENT' : idx === nextStationIndex ? 'NEXT' : 'UPCOMING',
         platform: ((trainIdx + idx) % 5) + 1,
         historicalAvgHaltMins: haltMins
       };
     });
 
-    const destStop = stops[stops.length - 1];
-    const destinationETA = destStop.predictedArrival;
-    const destinationPredictedDelay = destStop.predictedDelayMinutes;
-    const destinationConfidence = destStop.confidenceScore;
-    const destinationETARange = destStop.etaRange;
-    const destinationRisk = destStop.riskLevel;
-
-    // Explainability factors
-    const explainabilityFactors: ExplainabilityFactor[] = [
-      {
-        id: `f-${tmpl.trainNumber}-1`,
-        name: tmpl.currentDelayMinutes > 15 ? 'Signal & Interlocking Hold' : 'Section Headway Clearance',
-        category: tmpl.currentDelayMinutes > 15 ? 'SIGNAL' : 'TRAFFIC_CONGESTION',
-        impactMinutes: tmpl.currentDelayMinutes > 15 ? Math.round(tmpl.currentDelayMinutes * 0.45) : 2,
-        description: `Active block section spacing (${tmpl.precedingTrainGapKm} km) near ${nextStnGeo.name}`,
-        severity: tmpl.currentDelayMinutes > 15 ? 'high' : 'low'
-      },
-      {
-        id: `f-${tmpl.trainNumber}-2`,
-        name: tmpl.trackCondition === 'CAUTION_TSR' ? 'Temporary Speed Restriction (TSR)' : 'Permanent Way Geometry',
-        category: 'TRACK_RESTRICTION',
-        impactMinutes: tmpl.trackCondition === 'CAUTION_TSR' ? 8 : 1,
-        description: `Track engineering caution order on ${currStnGeo.name} - ${nextStnGeo.name} line`,
-        severity: tmpl.trackCondition === 'CAUTION_TSR' ? 'high' : 'low'
-      },
-      {
-        id: `f-${tmpl.trainNumber}-3`,
-        name: 'Loco Cruise & Recovery Slack',
-        category: 'SPEED_RECOVERY',
-        impactMinutes: -Math.max(1, Math.round(tmpl.maxSpeedKmH > 120 ? 4 : 2)),
-        description: `High-power traction maintaining optimal MPS (${tmpl.maxSpeedKmH} km/h)`,
-        severity: 'low'
-      },
-      {
-        id: `f-${tmpl.trainNumber}-4`,
-        name: 'Dwell Time & Passenger Boarding',
-        category: 'STATION_HALT',
-        impactMinutes: 3,
-        description: `Average dwell margin at major junction stations`,
-        severity: 'low'
-      }
-    ];
-
     const timeStr = `${String(nowHours).padStart(2, '0')}:${String(nowMinutes).padStart(2, '0')}`;
 
-    return {
+    // Base template train
+    const baseTrain: TrainData = {
       id: `train-${tmpl.trainNumber}`,
       trainNumber: tmpl.trainNumber,
       trainName: tmpl.trainName,
@@ -1399,7 +1334,7 @@ export function generateAllRunningTrains(referenceDate: Date = new Date()): Trai
       destination: destination.code,
       destinationName: destination.name,
       totalDistanceKm,
-      currentLocationName: `${currStnGeo.name} → ${nextStnGeo.name} (${Math.round(currentProgressDist)} km)`,
+      currentLocationName: `Between ${currStnGeo.code} & ${nextStnGeo.code} • ${distanceToNextStationKm} km to ${nextStnGeo.name}`,
       currentLatitude,
       currentLongitude,
       currentSpeedKmH: tmpl.currentSpeedKmH,
@@ -1415,15 +1350,34 @@ export function generateAllRunningTrains(referenceDate: Date = new Date()): Trai
       trackCondition: tmpl.trackCondition,
       trafficLevel: tmpl.trafficLevel,
       precedingTrainGapKm: tmpl.precedingTrainGapKm,
-      destinationETA,
-      destinationPredictedDelay,
-      destinationConfidence,
-      destinationETARange,
-      destinationRisk,
-      stops,
-      explainability: explainabilityFactors
+      destinationETA: '',
+      destinationPredictedDelay: 0,
+      destinationConfidence: 95,
+      destinationETARange: '',
+      destinationRisk: 'LOW',
+      stops: baseStops,
+      explainability: []
+    };
+
+    // Run ML Prediction Model
+    const mlPrediction = MLTrainPredictionModel.predictRouteETAs(baseTrain, currentProgressDist);
+
+    return {
+      ...baseTrain,
+      destinationETA: mlPrediction.destinationETA,
+      destinationPredictedDelay: mlPrediction.destinationPredictedDelay,
+      destinationConfidence: mlPrediction.destinationConfidence,
+      destinationETARange: mlPrediction.destinationETARange,
+      destinationRisk: mlPrediction.destinationRisk,
+      stops: mlPrediction.updatedStops,
+      explainability: mlPrediction.explainability,
+      currentStationIndex: mlPrediction.activeStationIndex,
+      nextStationCode: mlPrediction.nextStationCode,
+      nextStationName: mlPrediction.nextStationName,
+      distanceToNextStationKm: mlPrediction.distanceToNextStationKm
     };
   });
 }
 
 export const ALL_RUNNING_INDIAN_TRAINS: TrainData[] = generateAllRunningTrains();
+

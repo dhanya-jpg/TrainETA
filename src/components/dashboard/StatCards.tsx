@@ -1,5 +1,5 @@
 import React from 'react';
-import { Train, Clock, AlertTriangle, Target, CheckCircle, ArrowUpRight } from 'lucide-react';
+import { motion } from 'motion/react';
 import { AnalyticsSummary } from '../../types';
 
 interface StatCardsProps {
@@ -9,101 +9,30 @@ interface StatCardsProps {
 
 export const StatCards: React.FC<StatCardsProps> = ({ analytics, onCardClick }) => {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-      {/* 1. Active Trains */}
-      <div 
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <motion.div 
         onClick={() => onCardClick?.('active')}
-        className="bg-white dark:bg-[#1a1a1c] p-4 rounded-2xl dark:rounded-none border border-slate-200 dark:border-white/10 shadow-xs hover:shadow-md transition-all cursor-pointer group"
+        className="bg-surface-dark text-ink p-8 rounded-[2rem] cursor-pointer group flex flex-col justify-between min-h-[200px]"
       >
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-bold text-slate-500 dark:text-[#f2f2f2]/50 uppercase tracking-wider">Active Trains</span>
-          <div className="w-8 h-8 rounded-xl dark:rounded-none bg-blue-50 text-blue-600 flex items-center justify-center group-hover:scale-105 transition-transform">
-            <Train className="w-4 h-4" />
-          </div>
+        <div className="flex items-center gap-2 text-sm font-mono-code uppercase tracking-widest text-ink/60">
+          Active Train & Status
         </div>
-        <div className="mt-3 flex items-baseline gap-2">
-          <span className="text-2xl font-black text-slate-900 dark:text-[#f2f2f2]">{analytics.activeTrainsCount}</span>
-          <span className="text-xs font-semibold text-emerald-600 flex items-center">
-            <ArrowUpRight className="w-3 h-3" /> Live
-          </span>
+        <div className="font-display text-7xl sm:text-[120px] leading-[0.85] tracking-tight mt-4">
+          {analytics.activeTrainsCount}
         </div>
-        <p className="mt-1 text-[11px] text-slate-400 dark:text-[#f2f2f2]/40">Trunk corridor monitored</p>
-      </div>
+      </motion.div>
 
-      {/* 2. Delayed Trains */}
-      <div 
+      <motion.div 
         onClick={() => onCardClick?.('delayed')}
-        className="bg-white dark:bg-[#1a1a1c] p-4 rounded-2xl dark:rounded-none border border-slate-200 dark:border-white/10 shadow-xs hover:shadow-md transition-all cursor-pointer group"
+        className="bg-surface-dark text-ink p-8 rounded-[2rem] cursor-pointer group flex flex-col justify-between min-h-[200px]"
       >
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-bold text-slate-500 dark:text-[#f2f2f2]/50 uppercase tracking-wider">Delayed Trains</span>
-          <div className="w-8 h-8 rounded-xl dark:rounded-none bg-amber-50 text-amber-600 flex items-center justify-center group-hover:scale-105 transition-transform">
-            <AlertTriangle className="w-4 h-4" />
-          </div>
+        <div className="flex items-center gap-2 text-sm font-mono-code uppercase tracking-widest text-ink/60">
+          Predicted Arrival @ BSB
         </div>
-        <div className="mt-3 flex items-baseline gap-2">
-          <span className="text-2xl font-black text-amber-600">{analytics.delayedTrainsCount}</span>
-          <span className="text-xs font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">
-            {Math.round((analytics.delayedTrainsCount / analytics.activeTrainsCount) * 100)}%
-          </span>
+        <div className="font-display text-accent text-7xl sm:text-[120px] leading-[0.85] tracking-tight mt-4">
+          Aug 28<br/>03:05
         </div>
-        <p className="mt-1 text-[11px] text-slate-400 dark:text-[#f2f2f2]/40">&gt;5 min threshold</p>
-      </div>
-
-      {/* 3. Average Delay */}
-      <div 
-        onClick={() => onCardClick?.('delay')}
-        className="bg-white dark:bg-[#1a1a1c] p-4 rounded-2xl dark:rounded-none border border-slate-200 dark:border-white/10 shadow-xs hover:shadow-md transition-all cursor-pointer group"
-      >
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-bold text-slate-500 dark:text-[#f2f2f2]/50 uppercase tracking-wider">Average Delay</span>
-          <div className="w-8 h-8 rounded-xl dark:rounded-none bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:scale-105 transition-transform">
-            <Clock className="w-4 h-4" />
-          </div>
-        </div>
-        <div className="mt-3 flex items-baseline gap-2">
-          <span className="text-2xl font-black text-slate-900 dark:text-[#f2f2f2]">{analytics.averageDelayMinutes}</span>
-          <span className="text-xs font-bold text-slate-500 dark:text-[#f2f2f2]/50">minutes</span>
-        </div>
-        <p className="mt-1 text-[11px] text-slate-400 dark:text-[#f2f2f2]/40">Systemwide fleet average</p>
-      </div>
-
-      {/* 4. ETA Prediction Accuracy */}
-      <div 
-        onClick={() => onCardClick?.('accuracy')}
-        className="bg-white dark:bg-[#1a1a1c] p-4 rounded-2xl dark:rounded-none border border-slate-200 dark:border-white/10 shadow-xs hover:shadow-md transition-all cursor-pointer group"
-      >
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-bold text-slate-500 dark:text-[#f2f2f2]/50 uppercase tracking-wider">ETA Accuracy</span>
-          <div className="w-8 h-8 rounded-xl dark:rounded-none bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-105 transition-transform">
-            <Target className="w-4 h-4" />
-          </div>
-        </div>
-        <div className="mt-3 flex items-baseline gap-2">
-          <span className="text-2xl font-black text-emerald-600">{analytics.overallAccuracyPercent}%</span>
-          <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded">
-            MAE ±3.9m
-          </span>
-        </div>
-        <p className="mt-1 text-[11px] text-slate-400 dark:text-[#f2f2f2]/40">90% confidence threshold</p>
-      </div>
-
-      {/* 5. System Status */}
-      <div className="bg-white dark:bg-[#1a1a1c] p-4 rounded-2xl dark:rounded-none border border-slate-200 dark:border-white/10 shadow-xs flex flex-col justify-between">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-bold text-slate-500 dark:text-[#f2f2f2]/50 uppercase tracking-wider">System Status</span>
-          <div className="w-8 h-8 rounded-xl dark:rounded-none bg-emerald-50 text-emerald-600 flex items-center justify-center">
-            <CheckCircle className="w-4 h-4" />
-          </div>
-        </div>
-        <div className="mt-3">
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span className="text-sm font-extrabold text-slate-900 dark:text-[#f2f2f2]">All Systems Operational</span>
-          </div>
-          <p className="mt-1 text-[11px] text-slate-400 dark:text-[#f2f2f2]/40">ML Residual Model Active</p>
-        </div>
-      </div>
+      </motion.div>
     </div>
   );
 };

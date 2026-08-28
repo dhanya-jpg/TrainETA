@@ -1,26 +1,48 @@
 @import "tailwindcss";
+
 @custom-variant dark (&:where(.dark, .dark *));
 
+@theme {
+  --font-sans: 'Helvetica Neue', Helvetica, 'Nimbus Sans L', Arial, sans-serif;
+  --font-display: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --color-bg: var(--bg);
+  --color-ink: var(--ink);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-on-accent: var(--on-accent);
+  --color-accent-subtle: var(--accent-subtle);
+  --color-surface: var(--surface);
+  --color-surface-dark: var(--surface-dark);
+  --color-border: var(--border);
+  --color-gold: var(--gold);
+}
+
 :root {
-  --bg: #F8F7F4;
-  --ink: #18181A;
-  --accent: #E53E3E;
-  --surface: #ffffff;
-  --surface-low: #F8F7F4;
-  --border: rgba(24, 24, 26, 0.1);
-  --ink-dim: rgba(24, 24, 26, 0.5);
-  --ink-faint: rgba(24, 24, 26, 0.1);
+  /* LIGHT THEME: Red as secondary / accent */
+  --bg: #F8F9FA;
+  --ink: #0F172A;
+  --accent: #DC2626; /* Crimson Red */
+  --accent-hover: #B91C1C;
+  --on-accent: #FFFFFF;
+  --accent-subtle: rgba(220, 38, 38, 0.12);
+  --surface: #FFFFFF;
+  --surface-dark: #F1F5F9;
+  --border: rgba(15, 23, 42, 0.09);
+  --gold: #D97706;
 }
 
 .dark {
-  --bg: #111113;
-  --ink: #f2f2f2;
-  --accent: #E53E3E;
-  --surface: #1a1a1c;
-  --surface-low: #141416;
-  --border: rgba(242, 242, 242, 0.08);
-  --ink-dim: rgba(242, 242, 242, 0.5);
-  --ink-faint: rgba(242, 242, 242, 0.1);
+  /* DARK THEME: Gold as secondary / accent */
+  --bg: #0A0A0A;
+  --ink: #FAFAFA;
+  --accent: #E5C158; /* Radiant Gold */
+  --accent-hover: #D4AF37;
+  --on-accent: #0A0A0A;
+  --accent-subtle: rgba(229, 193, 88, 0.16);
+  --surface: #141414;
+  --surface-dark: #1E1E22;
+  --border: rgba(255, 255, 255, 0.09);
+  --gold: #E5C158;
 }
 
 * {
@@ -32,46 +54,37 @@ body {
   margin: 0;
   background-color: var(--bg);
   color: var(--ink);
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: 'Helvetica Neue', Helvetica, 'Nimbus Sans L', Arial, sans-serif;
   min-height: 100vh;
 }
 
 ::selection {
   background: var(--accent);
-  color: white;
+  color: var(--on-accent);
+}
+
+.font-display {
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 .font-mono-code {
   font-family: 'JetBrains Mono', monospace;
 }
 
-.font-syne {
-  font-family: 'Syne', sans-serif;
-}
-
-.meta-label {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.65rem;
-  text-transform: uppercase;
-  letter-spacing: 0.15em;
-  color: var(--ink-dim);
-}
-
-/* Custom scrollbar for editorial minimalist aesthetic */
+/* Elegant scrollbar */
 ::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
+  width: 6px;
+  height: 6px;
 }
-
 ::-webkit-scrollbar-track {
   background: transparent;
 }
-
 ::-webkit-scrollbar-thumb {
-  background: var(--ink-faint);
-  border-radius: 2px;
+  background: var(--border);
+  border-radius: 3px;
 }
-
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--ink-dim);
+  background: var(--accent);
 }

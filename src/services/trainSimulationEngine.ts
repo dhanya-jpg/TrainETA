@@ -1,6 +1,5 @@
 import { TrainData, StationStop } from '../types';
-import { INDIAN_STATIONS, StationGeo, ALL_INDIAN_TRAIN_TEMPLATES } from '../data/allIndianTrains';
-import { recalculateTrainETAs, formatMinutesToTime, parseTimeToMinutes } from './etaPredictionService';
+import { recalculateTrainETAs } from './etaPredictionService';
 
 /**
  * Calculates Great Circle bearing angle (0 - 360 deg) between two coordinate points
@@ -9,7 +8,7 @@ export function calculateBearing(lat1: number, lon1: number, lat2: number, lon2:
   const dLon = ((lon2 - lon1) * Math.PI) / 180;
   const y = Math.sin(dLon) * Math.cos((lat2 * Math.PI) / 180);
   const x =
-    Math.cos((lat1 * Math.PI) / 180) * Math.sin((lat2 * Math.PI) / 180) -
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) -
     Math.sin((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.cos(dLon);
   const brng = (Math.atan2(y, x) * 180) / Math.PI;
   return (brng + 360) % 360;
@@ -33,7 +32,7 @@ export function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lo
 }
 
 /**
- * Returns formatted live Indian Standard Time (IST) or current local time string
+ * Returns formatted live Indian Standard Time (IST) timestamp string
  */
 export function getLiveTelemetryTimestamp(date = new Date()): string {
   const hours = String(date.getHours()).padStart(2, '0');
@@ -43,130 +42,176 @@ export function getLiveTelemetryTimestamp(date = new Date()): string {
 }
 
 /**
- * Advances a single train along its route in real-time
+ * Computes deterministic physical target speed based on track conditions, signals, and stations
+ */
+export function computePhysicalTargetSpeed(train: TrainData, distToNextKm: number, distFromPrevKm: number): number {
+  let permissibleMax = train.maxSpeedKmH || 110;
+
+  // 1. Signal Aspect restrictions
+  if (train.signalAspect === 'STOP_RED') {
+    return 0;
+  } else if (train.signalAspect === 'CAUTION_YELLOW') {
+    permissibleMax = Math.min(permissibleMax, 35);
+  } else if (train.signalAspect === 'ATTENTION_DOUBLE_YELLOW') {
+    permissibleMax = Math.min(permissibleMax, 65);
+  }
+
+  // 2. Track TSR Restrictions
+  if (train.trackCondition === 'RESTRICTED') {
+    permissibleMax = Math.min(permissibleMax, 45);
+  } else if (train.trackCondition === 'CAUTION_TSR') {
+    permissibleMax = Math.min(permissibleMax, 60);
+  }
+
+  // 3. Weather visibility speed restrictions
+  if (train.weather === 'FOG') {
+    permissibleMax = Math.min(permissibleMax, 60);
+  } else if (train.weather === 'HEAVY_RAIN' || train.weather === 'THUNDERSTORM') {
+    permissibleMax = Math.min(permissibleMax, 75);
+  }
+
+  // 4. Preceding train gap headway constraint
+  if (train.precedingTrainGapKm < 3.0) {
+    permissibleMax = Math.min(permissibleMax, 30);
+  } else if (train.precedingTrainGapKm < 5.5) {
+    permissibleMax = Math.min(permissibleMax, 60);
+  }
+
+  // 5. Station deceleration braking curve when approaching within 4 km
+  if (distToNextKm <= 4.0) {
+    const approachSpeed = Math.max(25, Math.min(permissibleMax, Math.round(permissibleMax * Math.sqrt(Math.max(0.05, distToNextKm / 4.0)))));
+    return approachSpeed;
+  }
+
+  // 6. Station acceleration tractive curve when departing within 2 km
+  if (distFromPrevKm <= 2.0) {
+    const departureSpeed = Math.max(30, Math.min(permissibleMax, Math.round(30 + (permissibleMax - 30) * (distFromPrevKm / 2.0))));
+    return departureSpeed;
+  }
+
+  return permissibleMax;
+}
+
+/**
+ * Advances a single train along its route with high mathematical and kinematic accuracy
  */
 export function advanceTrainPhysics(
   train: TrainData,
   deltaSeconds: number,
   simSpeedMultiplier: number = 1
 ): TrainData {
-  if (!train.stops || train.stops.length < 2) return train;
+  const stops = train.stops;
+  if (!stops || stops.length < 2) return train;
 
   const effectiveSimSpeed = Math.max(1, Math.min(10, simSpeedMultiplier));
-  
-  // Real-world speed micro-variations (simulating traction fluctuations, throttle adjustments, grade profile)
-  const speedNoise = (Math.random() - 0.5) * 3;
-  let targetSpeed = Math.max(40, Math.min(train.maxSpeedKmH, train.currentSpeedKmH + speedNoise));
+  const totalRouteDistKm = stops[stops.length - 1].distanceKm;
 
-  // If approaching next station within 3 km, simulate gradual deceleration
-  if (train.distanceToNextStationKm <= 3 && train.distanceToNextStationKm > 0.5) {
-    targetSpeed = Math.max(30, Math.min(60, targetSpeed * 0.8));
-  }
+  // 1. Calculate current exact progress distance along route
+  const currentIdx = Math.max(0, Math.min(stops.length - 1, train.currentStationIndex));
+  const nextIdx = Math.min(stops.length - 1, currentIdx + 1);
+  const prevStn = stops[currentIdx];
+  const nextStn = stops[nextIdx];
 
-  // Distance covered during this time slice in kilometers
-  // To make movement visibly evident on the live map even at 1x speed, we apply a smooth dynamic step
-  const visualRate = 0.08 * effectiveSimSpeed; // visual progress step
-  const physicalDistanceDeltaKm = (targetSpeed / 3600) * deltaSeconds * effectiveSimSpeed + visualRate;
+  const segStartDist = prevStn.distanceKm;
+  const segEndDist = nextStn.distanceKm;
+  const segSpan = Math.max(1, segEndDist - segStartDist);
 
-  const stops = train.stops;
-  const totalDistanceKm = train.totalDistanceKm || stops[stops.length - 1].distanceKm;
-
-  // Calculate current distance along route
-  let currentDist = 0;
-  const currIdx = Math.max(0, Math.min(stops.length - 1, train.currentStationIndex));
-  const nextIdx = Math.min(stops.length - 1, currIdx + 1);
-
-  const currStation = stops[currIdx];
-  const nextStation = stops[nextIdx];
-
-  const segStartDist = currStation.distanceKm;
-  const segEndDist = nextStation.distanceKm;
-  const segLength = Math.max(5, segEndDist - segStartDist);
-
-  // Compute current estimated progress distance
-  const currentRatio = 
-    calculateDistanceKm(currStation.latitude, currStation.longitude, train.currentLatitude, train.currentLongitude) / segLength;
-  
-  let newProgressDist = segStartDist + Math.min(segLength, Math.max(0, currentRatio * segLength)) + physicalDistanceDeltaKm;
-
-  // Check if reached destination: loop back to origin or reverse smoothly
-  if (newProgressDist >= totalDistanceKm) {
-    newProgressDist = 0;
-  }
-
-  // Determine active segment based on newProgressDist
-  let newCurrIndex = 0;
-  for (let i = 0; i < stops.length - 1; i++) {
-    if (newProgressDist >= stops[i].distanceKm) {
-      newCurrIndex = i;
-    }
-  }
-
-  const newNextIndex = Math.min(stops.length - 1, newCurrIndex + 1);
-  const activeStartStn = stops[newCurrIndex];
-  const activeEndStn = stops[newNextIndex];
-
-  const activeSegStart = activeStartStn.distanceKm;
-  const activeSegEnd = activeEndStn.distanceKm;
-  const activeSpan = Math.max(1, activeSegEnd - activeSegStart);
-  const activeRatio = Math.max(0, Math.min(1, (newProgressDist - activeSegStart) / activeSpan));
-
-  // High precision coordinate interpolation along the railway corridor
-  const newLat = Number((activeStartStn.latitude + (activeEndStn.latitude - activeStartStn.latitude) * activeRatio).toFixed(5));
-  const newLng = Number((activeStartStn.longitude + (activeEndStn.longitude - activeStartStn.longitude) * activeRatio).toFixed(5));
-
-  const remainingToNextKm = Math.max(0.5, Math.round((activeSegEnd - newProgressDist) * 10) / 10);
-
-  // Update stop statuses (DEPARTED, CURRENT, NEXT, UPCOMING)
-  const updatedStops: StationStop[] = stops.map((stop, idx) => {
-    let status: 'DEPARTED' | 'CURRENT' | 'NEXT' | 'UPCOMING' = 'UPCOMING';
-    if (idx < newCurrIndex) {
-      status = 'DEPARTED';
-    } else if (idx === newCurrIndex) {
-      status = activeRatio > 0.85 ? 'CURRENT' : 'DEPARTED';
-    } else if (idx === newNextIndex) {
-      status = 'NEXT';
-    } else {
-      status = 'UPCOMING';
-    }
-    return {
-      ...stop,
-      status
-    };
-  });
-
-  // Calculate live location description
-  let locationDesc = '';
-  if (activeRatio < 0.1) {
-    locationDesc = `Departed ${activeStartStn.stationName} (${activeStartStn.stationCode})`;
-  } else if (activeRatio > 0.9) {
-    locationDesc = `Arriving at ${activeEndStn.stationName} (${activeEndStn.stationCode}) • PF #${activeEndStn.platform}`;
+  // Exact current progress distance
+  let currentProgDist = segStartDist;
+  if (train.distanceToNextStationKm !== undefined && train.distanceToNextStationKm >= 0) {
+    currentProgDist = Math.max(segStartDist, Math.min(segEndDist, segEndDist - train.distanceToNextStationKm));
   } else {
-    locationDesc = `Between ${activeStartStn.stationCode} & ${activeEndStn.stationCode} • ${remainingToNextKm} km to ${activeEndStn.stationName}`;
+    currentProgDist = segStartDist;
   }
 
-  // Dynamic Delay jitter / resolution
-  const delayAdjustment = Math.random() < 0.05 ? (Math.random() > 0.6 ? 1 : -1) : 0;
-  const newDelay = Math.max(0, train.currentDelayMinutes + delayAdjustment);
+  const distToNextKm = Math.max(0, segEndDist - currentProgDist);
+  const distFromPrevKm = Math.max(0, currentProgDist - segStartDist);
 
-  // Recalculate full dynamic train state
-  const updatedTrain: TrainData = {
+  // 2. Determine target speed via physical constraints
+  const targetSpeed = computePhysicalTargetSpeed(train, distToNextKm, distFromPrevKm);
+
+  // Smooth acceleration / deceleration (max 1.5 km/h per second change)
+  const currentSpeed = train.currentSpeedKmH || 70;
+  const maxSpeedStep = 2.0 * deltaSeconds * effectiveSimSpeed;
+  let newSpeed = currentSpeed;
+  if (currentSpeed < targetSpeed) {
+    newSpeed = Math.min(targetSpeed, currentSpeed + maxSpeedStep);
+  } else if (currentSpeed > targetSpeed) {
+    newSpeed = Math.max(targetSpeed, currentSpeed - maxSpeedStep);
+  }
+  newSpeed = Math.round(newSpeed);
+
+  // 3. Exact physical distance step: Δd = (v / 3600) * Δt * simMultiplier
+  // A minimum calibrated delta ensures smooth visible movement across zoom levels
+  const physicalStepKm = (newSpeed / 3600) * deltaSeconds * effectiveSimSpeed;
+  const calibratedStepKm = Math.max(0.015 * effectiveSimSpeed, physicalStepKm);
+
+  let newProgDist = currentProgDist + calibratedStepKm;
+
+  // Handle loop / completion when reaching end of route
+  if (newProgDist >= totalRouteDistKm) {
+    newProgDist = 0; // Restart from origin station
+  }
+
+  // 4. Find new active station segment based on newProgDist
+  let activeIndex = 0;
+  for (let i = 0; i < stops.length - 1; i++) {
+    if (newProgDist >= stops[i].distanceKm) {
+      activeIndex = i;
+    }
+  }
+
+  const activeNextIndex = Math.min(stops.length - 1, activeIndex + 1);
+  const activePrevStation = stops[activeIndex];
+  const activeNextStation = stops[activeNextIndex];
+
+  const activeSegStart = activePrevStation.distanceKm;
+  const activeSegEnd = activeNextStation.distanceKm;
+  const activeSegLength = Math.max(1, activeSegEnd - activeSegStart);
+
+  // Precise ratio along current segment [0, 1]
+  const progressRatio = Math.max(0, Math.min(1, (newProgDist - activeSegStart) / activeSegLength));
+
+  // 5. Accurate linear coordinate interpolation along railway track
+  const newLat = Number((activePrevStation.latitude + (activeNextStation.latitude - activePrevStation.latitude) * progressRatio).toFixed(5));
+  const newLng = Number((activePrevStation.longitude + (activeNextStation.longitude - activePrevStation.longitude) * progressRatio).toFixed(5));
+
+  // 6. Exact distance to next and previous stops
+  const exactDistToNextKm = Math.max(0, Math.round((activeSegEnd - newProgDist) * 10) / 10);
+  const exactDistFromPrevKm = Math.max(0, Math.round((newProgDist - activeSegStart) * 10) / 10);
+
+  // 7. Dynamic contextual location description
+  let locationDescription = '';
+  if (exactDistFromPrevKm <= 0.8 && newSpeed < 40) {
+    locationDescription = `At ${activePrevStation.stationName} (${activePrevStation.stationCode}) • Platform #${activePrevStation.platform}`;
+  } else if (exactDistFromPrevKm <= 2.5) {
+    locationDescription = `Departed ${activePrevStation.stationName} (${activePrevStation.stationCode}) • ${exactDistFromPrevKm} km ago`;
+  } else if (exactDistToNextKm <= 2.5) {
+    locationDescription = `Approaching ${activeNextStation.stationName} (${activeNextStation.stationCode}) • ${exactDistToNextKm} km remaining • PF #${activeNextStation.platform}`;
+  } else {
+    locationDescription = `Between ${activePrevStation.stationCode} & ${activeNextStation.stationCode} • ${exactDistToNextKm} km to ${activeNextStation.stationName}`;
+  }
+
+  // 8. Construct updated train telemetry
+  const interimTrain: TrainData = {
     ...train,
     currentLatitude: newLat,
     currentLongitude: newLng,
-    currentSpeedKmH: Math.round(targetSpeed),
-    currentDelayMinutes: newDelay,
-    currentStationIndex: newCurrIndex,
-    nextStationCode: activeEndStn.stationCode,
-    nextStationName: activeEndStn.stationName,
-    distanceToNextStationKm: remainingToNextKm,
-    currentLocationName: locationDesc,
-    lastUpdated: getLiveTelemetryTimestamp(),
-    stops: updatedStops
+    currentSpeedKmH: newSpeed,
+    currentStationIndex: activeIndex,
+    nextStationCode: activeNextStation.stationCode,
+    nextStationName: activeNextStation.stationName,
+    distanceToNextStationKm: exactDistToNextKm,
+    currentLocationName: locationDescription,
+    lastUpdated: getLiveTelemetryTimestamp()
   };
 
-  return recalculateTrainETAs(updatedTrain, {
-    speedKmH: Math.round(targetSpeed),
-    delayMinutes: newDelay
+  // 9. Recalculate dynamic ETAs and delays via ML engine
+  const prediction = recalculateTrainETAs(interimTrain, {
+    speedKmH: newSpeed,
+    delayMinutes: train.currentDelayMinutes
   });
+
+  return prediction;
 }
+

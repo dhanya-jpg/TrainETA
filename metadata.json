@@ -1,6 +1,6 @@
 {
   "name": "Remix SMART ETA",
-  "description": "AI-Powered Dynamic Train ETA \u0026 Delay Intelligence System - Track, Predict, Explain, Simulate, and Recommend",
+  "description": "AI-Powered Dynamic Train ETA & Delay Intelligence System with Google Docs Workspace Integration - Track, Predict, Explain, Simulate, and Export",
   "requestFramePermissions": [
     "geolocation"
   ],

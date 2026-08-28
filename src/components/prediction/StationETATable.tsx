@@ -1,15 +1,9 @@
 import React from 'react';
 import { 
   CheckCircle2, 
-  MapPin, 
   Clock, 
-  ShieldCheck, 
-  AlertCircle, 
-  ArrowDown, 
-  Radio,
-  Sparkles
 } from 'lucide-react';
-import { StationStop, TrainData } from '../../types';
+import { TrainData } from '../../types';
 
 interface StationETATableProps {
   train: TrainData;
@@ -18,24 +12,24 @@ interface StationETATableProps {
 
 export const StationETATable: React.FC<StationETATableProps> = ({ train, onSelectStation }) => {
   return (
-    <div className="bg-white dark:bg-[#1a1a1c] rounded-2xl dark:rounded-none border border-slate-200 dark:border-white/10 shadow-xs overflow-hidden">
+    <div className="bg-surface rounded-3xl border border-border overflow-hidden text-ink shadow-xs">
       {/* Table Header with Context */}
-      <div className="p-5 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
+      <div className="p-5 border-b border-border flex flex-wrap items-center justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
-            <h3 className="text-base font-extrabold text-slate-900 dark:text-[#f2f2f2] tracking-tight">
+            <h3 className="text-base font-bold font-display text-ink tracking-tight">
               Station-by-Station Dynamic ETA & Delay Forecast
             </h3>
-            <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
+            <span className="text-[10px] font-mono-code font-bold uppercase px-2 py-0.5 rounded bg-accent/15 text-accent border border-accent/30">
               PHYSICS + ML RESIDUAL
             </span>
           </div>
-          <p className="text-xs text-slate-500 dark:text-[#f2f2f2]/50 mt-0.5 font-medium">
+          <p className="text-xs text-ink/60 mt-0.5 font-medium">
             Dynamic station ETA predictions generated from real-time speed, headway, signal aspect, and historical halt slack.
           </p>
         </div>
 
-        <div className="flex items-center gap-3 text-xs font-bold text-slate-600 dark:text-[#f2f2f2]/70">
+        <div className="flex items-center gap-3 text-xs font-mono-code font-bold text-ink/70">
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
             <span>On Time / Departed</span>
@@ -45,7 +39,7 @@ export const StationETATable: React.FC<StationETATableProps> = ({ train, onSelec
             <span>Moderate Delay</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-red-500"></span>
+            <span className="w-2.5 h-2.5 rounded-full bg-accent"></span>
             <span>High Delay Risk</span>
           </div>
         </div>
@@ -55,7 +49,7 @@ export const StationETATable: React.FC<StationETATableProps> = ({ train, onSelec
       <div className="overflow-x-auto">
         <table className="w-full text-left text-xs border-collapse">
           <thead>
-            <tr className="bg-slate-50 dark:bg-[#141416] border-b border-slate-200 dark:border-white/10 text-slate-500 dark:text-[#f2f2f2]/50 font-bold uppercase tracking-wider text-[10px]">
+            <tr className="bg-surface-dark border-b border-border text-ink/60 font-mono-code font-bold uppercase tracking-wider text-[10px]">
               <th className="py-3.5 pl-6 pr-4">Route & Station</th>
               <th className="py-3.5 px-4">Scheduled Arrival</th>
               <th className="py-3.5 px-4">Predicted ETA</th>
@@ -65,7 +59,7 @@ export const StationETATable: React.FC<StationETATableProps> = ({ train, onSelec
               <th className="py-3.5 pr-6 pl-4 text-right">Platform</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 font-medium">
+          <tbody className="divide-y divide-border font-medium">
             {train.stops.map((stop, idx) => {
               const isCurrent = stop.status === 'CURRENT';
               const isNext = stop.status === 'NEXT';
@@ -77,12 +71,12 @@ export const StationETATable: React.FC<StationETATableProps> = ({ train, onSelec
                   onClick={() => onSelectStation?.(stop.stationCode)}
                   className={`transition-colors cursor-pointer ${
                     isCurrent 
-                      ? 'bg-blue-50/70 hover:bg-blue-50 font-bold' 
+                      ? 'bg-accent/10 hover:bg-accent/15 font-bold' 
                       : isNext 
-                      ? 'bg-amber-50/40 hover:bg-amber-50/60' 
+                      ? 'bg-amber-500/10 hover:bg-amber-500/15' 
                       : isDeparted 
-                      ? 'bg-slate-50 dark:bg-[#141416]/40 hover:bg-slate-50 dark:bg-[#141416] text-slate-500 dark:text-[#f2f2f2]/50' 
-                      : 'hover:bg-slate-50 dark:bg-[#141416]'
+                      ? 'bg-surface-dark/40 hover:bg-surface-dark text-ink/60' 
+                      : 'hover:bg-surface-dark'
                   }`}
                 >
                   {/* Station & Timeline Column */}
@@ -90,25 +84,25 @@ export const StationETATable: React.FC<StationETATableProps> = ({ train, onSelec
                     <div className="flex items-center gap-3">
                       {/* Vertical Route Dot / Icon */}
                       <div className="relative flex flex-col items-center">
-                        <div className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-[11px] shadow-xs ${
+                        <div className={`w-7 h-7 rounded-full flex items-center justify-center font-mono-code font-bold text-[11px] shadow-xs ${
                           isDeparted 
-                            ? 'bg-emerald-100 text-emerald-700 border border-emerald-300' 
+                            ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30' 
                             : isCurrent 
-                            ? 'bg-blue-600 text-white ring-4 ring-blue-100 animate-pulse' 
+                            ? 'bg-accent text-on-accent ring-4 ring-accent/20 animate-pulse' 
                             : isNext 
-                            ? 'bg-amber-500 text-white' 
-                            : 'bg-slate-200 text-slate-700 dark:text-[#f2f2f2]/80'
+                            ? 'bg-amber-500 text-on-accent' 
+                            : 'bg-surface-dark text-ink/80 border border-border'
                         }`}>
                           {isDeparted ? <CheckCircle2 className="w-4 h-4" /> : idx + 1}
                         </div>
                       </div>
 
                       <div>
-                        <div className="font-extrabold text-slate-900 dark:text-[#f2f2f2] text-sm flex items-center gap-1.5">
+                        <div className="font-bold text-ink text-sm flex items-center gap-1.5">
                           <span>{stop.stationName}</span>
-                          <span className="text-slate-500 dark:text-[#f2f2f2]/50 font-mono text-[11px] font-bold">({stop.stationCode})</span>
+                          <span className="text-ink/60 font-mono-code text-[11px] font-bold">({stop.stationCode})</span>
                         </div>
-                        <div className="text-[11px] text-slate-500 dark:text-[#f2f2f2]/50 font-medium">
+                        <div className="text-[11px] text-ink/60 font-medium">
                           {stop.distanceKm} km • Avg Halt: {stop.historicalAvgHaltMins} min
                         </div>
                       </div>
@@ -116,39 +110,39 @@ export const StationETATable: React.FC<StationETATableProps> = ({ train, onSelec
                   </td>
 
                   {/* Scheduled Arrival */}
-                  <td className="py-4 px-4 font-mono text-xs text-slate-700 dark:text-[#f2f2f2]/80">
+                  <td className="py-4 px-4 font-mono-code text-xs text-ink/80">
                     <div>
-                      <strong className="text-slate-900 dark:text-[#f2f2f2]">{stop.scheduledArrival}</strong>
-                      <span className="text-[10px] text-slate-500 dark:text-[#f2f2f2]/50 block">Dep: {stop.scheduledDeparture}</span>
+                      <strong className="text-ink">{stop.scheduledArrival}</strong>
+                      <span className="text-[10px] text-ink/60 block">Dep: {stop.scheduledDeparture}</span>
                     </div>
                   </td>
 
                   {/* Predicted ETA */}
                   <td className="py-4 px-4">
                     <div className="flex items-center gap-1.5">
-                      <Clock className="w-3.5 h-3.5 text-blue-600" />
-                      <span className="font-mono font-black text-sm text-blue-700">
+                      <Clock className="w-3.5 h-3.5 text-accent" />
+                      <span className="font-mono-code font-bold text-sm text-accent">
                         {stop.predictedArrival}
                       </span>
                     </div>
-                    <span className="text-[10px] text-slate-500 dark:text-[#f2f2f2]/50 block font-mono">
+                    <span className="text-[10px] text-ink/60 block font-mono-code">
                       Dep: {stop.predictedDeparture}
                     </span>
                   </td>
 
                   {/* Predicted Delay */}
-                  <td className="py-4 px-4">
+                  <td className="py-4 px-4 font-mono-code">
                     {stop.predictedDelayMinutes === 0 ? (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
                         On Time (0 min)
                       </span>
                     ) : (
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
                         stop.predictedDelayMinutes > 15
-                          ? 'bg-red-100 text-red-800'
+                          ? 'bg-accent/15 text-accent border border-accent/30'
                           : stop.predictedDelayMinutes > 5
-                          ? 'bg-amber-100 text-amber-800'
-                          : 'bg-emerald-100 text-emerald-800'
+                          ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30'
+                          : 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
                       }`}>
                         +{stop.predictedDelayMinutes} min
                       </span>
@@ -156,43 +150,43 @@ export const StationETATable: React.FC<StationETATableProps> = ({ train, onSelec
                   </td>
 
                   {/* Confidence Score & 90% Window */}
-                  <td className="py-4 px-4">
+                  <td className="py-4 px-4 font-mono-code">
                     <div className="w-36 space-y-1">
                       <div className="flex items-center justify-between text-[10px]">
-                        <span className="font-bold text-slate-700 dark:text-[#f2f2f2]/80">Confidence</span>
-                        <span className="font-mono font-extrabold text-blue-700">{stop.confidenceScore}%</span>
+                        <span className="font-bold text-ink/80">Confidence</span>
+                        <span className="font-bold text-accent">{stop.confidenceScore}%</span>
                       </div>
-                      <div className="w-full h-1.5 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
+                      <div className="w-full h-1.5 bg-surface-dark rounded-full overflow-hidden border border-border">
                         <div 
-                          className="h-full bg-blue-600 rounded-full transition-all"
+                          className="h-full bg-accent rounded-full transition-all"
                           style={{ width: `${stop.confidenceScore}%` }}
                         />
                       </div>
-                      <span className="text-[10px] text-slate-500 dark:text-[#f2f2f2]/50 font-mono block">
+                      <span className="text-[10px] text-ink/60 block">
                         Range: {stop.etaRange}
                       </span>
                     </div>
                   </td>
 
                   {/* Status Badge */}
-                  <td className="py-4 px-4">
+                  <td className="py-4 px-4 font-mono-code">
                     {isDeparted && (
-                      <span className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-[#f2f2f2]/80 border border-slate-200 dark:border-white/10">
+                      <span className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-surface-dark text-ink/80 border border-border">
                         Departed
                       </span>
                     )}
                     {isCurrent && (
-                      <span className="px-2.5 py-1 rounded-lg text-[11px] font-extrabold bg-blue-600 text-white shadow-xs animate-pulse">
+                      <span className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-accent text-on-accent shadow-xs animate-pulse">
                         Current Station
                       </span>
                     )}
                     {isNext && (
-                      <span className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-500 text-white">
+                      <span className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-500 text-on-accent">
                         Next Station
                       </span>
                     )}
                     {stop.status === 'UPCOMING' && (
-                      <span className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-[#f2f2f2]/70">
+                      <span className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-surface-dark text-ink/70 border border-border">
                         Upcoming
                       </span>
                     )}
@@ -200,7 +194,7 @@ export const StationETATable: React.FC<StationETATableProps> = ({ train, onSelec
 
                   {/* Platform */}
                   <td className="py-4 pr-6 pl-4 text-right">
-                    <span className="font-mono font-black text-xs text-slate-900 dark:text-[#f2f2f2] bg-slate-100 dark:bg-white/5 px-2 py-1 rounded-lg border border-slate-200 dark:border-white/10">
+                    <span className="font-mono-code font-bold text-xs text-ink bg-surface-dark px-2 py-1 rounded-lg border border-border">
                       PF {stop.platform}
                     </span>
                   </td>

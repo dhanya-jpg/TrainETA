@@ -25,6 +25,7 @@ import { UserRole, AuthUser } from '../../types';
 export type NavigationTab = 
   | 'dashboard'
   | 'live-map'
+  | 'ai-copilot'
   | 'search'
   | 'eta-prediction'
   | 'delay-analysis'
@@ -32,6 +33,7 @@ export type NavigationTab =
   | 'what-if'
   | 'delay-propagation'
   | 'railway-control'
+  | 'google-docs'
   | 'alerts'
   | 'analytics'
   | 'reports'
@@ -58,6 +60,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const operatorNavItems: { id: NavigationTab; label: string; icon: React.ComponentType<{ className?: string }>; badge?: string | number }[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'google-docs', label: 'Google Docs Hub', icon: FileText, badge: 'Docs' },
+    { id: 'ai-copilot', label: 'AI Copilot', icon: BrainCircuit, badge: 'Live AI' },
     { id: 'live-map', label: 'Live Tracking', icon: Map },
     { id: 'search', label: 'Train Search', icon: Search },
     { id: 'eta-prediction', label: 'ETA Prediction', icon: Clock },
@@ -71,8 +75,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'reports', label: 'Architecture & Pipeline', icon: FileText },
   ];
 
-  const passengerNavItems: { id: NavigationTab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+  const passengerNavItems: { id: NavigationTab; label: string; icon: React.ComponentType<{ className?: string }>; badge?: string | number }[] = [
     { id: 'passenger-view', label: 'Passenger Portal', icon: UserCheck },
+    { id: 'google-docs', label: 'Google Docs Reports', icon: FileText, badge: 'Docs' },
+    { id: 'ai-copilot', label: 'AI Train Assistant', icon: BrainCircuit, badge: 'AI' },
     { id: 'live-map', label: 'Live Map', icon: Map },
     { id: 'search', label: 'Train Search', icon: Search },
     { id: 'alerts', label: 'Alerts', icon: ShieldAlert },
@@ -81,30 +87,31 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const navItems = userRole === 'OPERATOR' ? operatorNavItems : passengerNavItems;
 
   return (
-    <aside className="w-[280px] bg-[#F8F7F4] dark:bg-[#141416] text-black dark:text-[#f2f2f2] flex flex-col h-[100dvh] border-r border-black/10 dark:border-[#f2f2f2]/10 shrink-0 select-none font-sans p-6">
+    <aside className="w-[280px] bg-surface-dark text-ink flex flex-col h-[100dvh] border-r border-border shrink-0 select-none font-sans p-6 z-50 transition-colors duration-300">
       {/* Brand Header */}
-      <div className="mb-12 flex flex-col">
-        <div className="font-syne font-extrabold text-2xl tracking-tight text-black dark:text-[#f2f2f2] uppercase">
+      <div className="mb-8 flex flex-col">
+        <div className="font-display font-black text-2xl tracking-tight text-ink uppercase">
           SMART ETA
         </div>
-        <div className="font-mono-code text-[0.55rem] uppercase tracking-[0.15em] text-[#E53E3E] mt-1 font-bold">
-          {userRole === 'OPERATOR' ? 'SECTION CTRL LIVE' : 'SYSTEM LIVE'}
+        <div className="font-mono-code text-[0.65rem] uppercase tracking-widest text-accent mt-1 font-bold flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse"></span>
+          {userRole === 'OPERATOR' ? 'SECTION CTRL LIVE' : 'PASSENGER PORTAL'}
         </div>
       </div>
 
       {/* Role Pill Switcher */}
       <div className="mb-6">
-        <div className="bg-[#F8F7F4] dark:bg-[#111113] p-1 rounded-sm border border-black/10 dark:border-[#f2f2f2]/10 flex items-center text-xs">
+        <div className="bg-surface p-1 rounded-xl border border-border flex items-center text-xs shadow-xs">
           <button
             onClick={() => {
               if (userRole !== 'OPERATOR') {
                 onToggleRole();
               }
             }}
-            className={`flex-1 py-1.5 px-2 rounded-[2px] font-mono-code text-[10px] uppercase tracking-wider font-bold transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer ${
+            className={`flex-1 py-2 px-2.5 rounded-lg font-mono-code text-[11px] uppercase tracking-wider font-bold transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer ${
               userRole === 'OPERATOR'
-                ? 'bg-white dark:bg-[#1a1a1c] text-black dark:text-[#f2f2f2] border border-black/10 dark:border-[#f2f2f2]/10'
-                : 'text-black/50 dark:text-[#f2f2f2]/50 hover:text-black dark:text-[#f2f2f2] hover:bg-black/5 dark:hover:bg-[#f2f2f2]/5 border border-transparent'
+                ? 'bg-accent text-on-accent shadow-xs'
+                : 'text-ink/60 hover:text-ink hover:bg-surface-dark'
             }`}
           >
             {userRole === 'PASSENGER' && <Lock className="w-3 h-3 text-amber-500" />}
@@ -116,10 +123,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 onToggleRole();
               }
             }}
-            className={`flex-1 py-1.5 px-2 rounded-[2px] font-mono-code text-[10px] uppercase tracking-wider font-bold transition-all text-center cursor-pointer ${
+            className={`flex-1 py-2 px-2.5 rounded-lg font-mono-code text-[11px] uppercase tracking-wider font-bold transition-all text-center cursor-pointer ${
               userRole === 'PASSENGER'
-                ? 'bg-white dark:bg-[#1a1a1c] text-black dark:text-[#f2f2f2] border border-black/10 dark:border-[#f2f2f2]/10'
-                : 'text-black/50 dark:text-[#f2f2f2]/50 hover:text-black dark:text-[#f2f2f2] hover:bg-black/5 dark:hover:bg-[#f2f2f2]/5 border border-transparent'
+                ? 'bg-accent text-on-accent shadow-xs'
+                : 'text-ink/60 hover:text-ink hover:bg-surface-dark'
             }`}
           >
             <span>Passenger</span>
@@ -129,7 +136,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Navigation Links */}
       <div className="flex-1 overflow-y-auto space-y-1.5 custom-scrollbar -mx-2 px-2">
-        <div className="font-mono-code text-[0.6rem] uppercase tracking-[0.2em] text-black/50 dark:text-[#f2f2f2]/50 font-bold mb-4 mt-2">
+        <div className="font-mono-code text-[0.65rem] uppercase tracking-widest text-ink/40 font-bold mb-3 mt-1">
           {userRole === 'OPERATOR' ? 'CONTROL MODULES' : 'NAVIGATION'}
         </div>
 
@@ -140,23 +147,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               key={item.id}
               onClick={() => onSelectTab(item.id)}
-              className={`w-full flex items-center justify-between px-4 py-2.5 rounded-sm text-[0.85rem] font-medium transition-all group cursor-pointer border ${
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all group cursor-pointer border ${
                 isActive
-                  ? 'bg-black/5 dark:bg-[#f2f2f2]/10 text-black dark:text-[#f2f2f2] border-black/10 dark:border-[#f2f2f2]/10'
-                  : 'text-black/50 dark:text-[#f2f2f2]/50 hover:text-black dark:text-[#f2f2f2] hover:bg-black/5 dark:hover:bg-[#f2f2f2]/5 border-transparent'
+                  ? 'bg-accent/15 text-accent border-accent/30 font-bold shadow-xs'
+                  : 'text-ink/70 hover:text-ink hover:bg-surface border-transparent'
               }`}
             >
               <div className="flex items-center gap-3">
-                <Icon className={`w-4 h-4 transition-colors ${isActive ? 'text-black dark:text-[#f2f2f2]' : 'text-black/50 dark:text-[#f2f2f2]/50 group-hover:text-black dark:text-[#f2f2f2]'}`} />
-                <span className="font-['Inter',sans-serif]">{item.label}</span>
+                <Icon className={`w-4 h-4 transition-colors ${isActive ? 'text-accent' : 'text-ink/50 group-hover:text-ink'}`} />
+                <span>{item.label}</span>
               </div>
               
               <div className="flex items-center gap-1.5">
                 {'badge' in item && item.badge && (
-                  <span className={`font-mono-code text-[9px] font-bold px-1.5 py-0.5 rounded-sm ${
-                    typeof item.badge === 'number'
-                      ? 'bg-[#E53E3E] text-white'
-                      : isActive ? 'bg-black/5 dark:bg-[#f2f2f2]/10 text-black dark:text-[#f2f2f2]' : 'bg-black/5 dark:bg-[#f2f2f2]/10 text-black dark:text-[#f2f2f2]/60'
+                  <span className={`font-mono-code text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                    isActive 
+                      ? 'bg-accent text-on-accent' 
+                      : 'bg-surface text-ink/70 border border-border'
                   }`}>
                     {item.badge}
                   </span>
@@ -168,20 +175,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* User Session & Logout Footer */}
-      <div className="pt-6 border-t border-black/10 dark:border-[#f2f2f2]/10 mt-auto">
+      <div className="pt-5 border-t border-border mt-auto">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 overflow-hidden">
-            <div className={`w-10 h-10 rounded-sm flex items-center justify-center font-bold text-xs text-white shrink-0 ${
-              userRole === 'OPERATOR' ? 'bg-white dark:bg-[#1a1a1c] border border-[#f2f2f2]/20' : 'bg-[#E53E3E]'
-            }`}>
-              {userRole === 'OPERATOR' ? 'OP' : 'VP'}
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-xs bg-accent text-on-accent shrink-0 shadow-xs">
+              {userRole === 'OPERATOR' ? 'OP' : (currentUser?.name ? currentUser.name.slice(0, 2).toUpperCase() : 'VP')}
             </div>
             <div className="overflow-hidden">
-              <div className="text-sm font-bold text-black dark:text-[#f2f2f2] truncate">
-                {currentUser?.name || (userRole === 'OPERATOR' ? 'Section Controller' : 'Ved Patel')}
+              <div className="text-sm font-bold text-ink truncate">
+                {currentUser?.name || (userRole === 'OPERATOR' ? 'Section Controller' : 'Railway Commuter')}
               </div>
-              <div className="text-[0.6rem] text-black/50 dark:text-[#f2f2f2]/50 font-mono-code truncate tracking-wider mt-0.5">
-                {currentUser?.email || (userRole === 'OPERATOR' ? 'trainoperator@gmail.com' : 'ved1801@gmail.com')}
+              <div className="text-[0.65rem] text-ink/50 font-mono-code truncate tracking-wider mt-0.5">
+                {currentUser?.email || (userRole === 'OPERATOR' ? 'controller.nr@irctc.gov.in' : 'commuter@smarteta.in')}
               </div>
             </div>
           </div>
@@ -189,7 +194,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {onLogout && (
             <button
               onClick={onLogout}
-              className="p-2 text-black dark:text-[#f2f2f2]/40 hover:text-[#E53E3E] hover:bg-black/5 dark:hover:bg-[#f2f2f2]/5 rounded-sm transition-colors cursor-pointer"
+              className="p-2.5 text-ink/60 hover:text-accent hover:bg-surface rounded-xl transition-colors cursor-pointer"
               title="Sign Out"
             >
               <LogOut className="w-4 h-4" />
