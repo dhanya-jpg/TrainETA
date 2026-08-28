@@ -315,9 +315,9 @@ export async function signInUser(
     return { success: false, error: 'Please enter your password.' };
   }
 
-  // Operator official credential verification or 1-click test
+  // Operator official credential verification
   if (role === 'OPERATOR') {
-    if (cleanEmail === 'trainoperator@gmail.com' && (cleanPass === 'eta161739' || cleanPass.length >= 4)) {
+    if (cleanEmail === 'trainoperator@gmail.com' && cleanPass === 'eta161739') {
       const authUser: AuthUser = {
         uid: 'official-operator-8492',
         email: cleanEmail,
@@ -339,33 +339,12 @@ export async function signInUser(
       }
 
       return { success: true, user: authUser };
+    } else {
+      return {
+        success: false,
+        error: 'Invalid Operator credentials. Access restricted to authorized Railway Controllers.'
+      };
     }
-  }
-
-  // Commuter Demo account direct match
-  if (role === 'PASSENGER' && cleanEmail === 'passenger@smarteta.in' && (cleanPass === 'passenger123' || cleanPass.length >= 4)) {
-    const authUser: AuthUser = {
-      uid: 'demo-commuter-101',
-      email: cleanEmail,
-      role: 'PASSENGER',
-      name: 'Aarav Sharma (Commuter)',
-      department: 'Commuter / Live Traveler Portal',
-      phone: '+91 98765 43210',
-      pnrOrTicket: '4829103948',
-      loginTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
-
-    try {
-      await logUserActivity(authUser.uid, {
-        activityType: 'LOGIN',
-        title: 'Logged in as Commuter',
-        details: `Sign-in session initiated for ${cleanEmail}`
-      });
-    } catch (e) {
-      console.warn('Passenger activity note:', e);
-    }
-
-    return { success: true, user: authUser };
   }
 
   try {
@@ -374,7 +353,7 @@ export async function signInUser(
 
     // Sync profile to Firestore
     try {
-      await syncUserProfileToFirestore(fbUser, role);
+      await syncUserProfileToFirestore(fbUser, 'PASSENGER');
     } catch (e) {
       console.warn('Profile sync note:', e);
     }
@@ -395,17 +374,17 @@ export async function signInUser(
       console.warn('Profile read warning:', e);
     }
 
-    const authUser = formatAuthUser(fbUser, role, {
+    const authUser = formatAuthUser(fbUser, 'PASSENGER', {
       name: profileName,
-      badgeId: badgeId || (role === 'OPERATOR' ? 'IR-WR-OP-8492' : undefined),
-      department: department || (role === 'OPERATOR' ? 'Control Office - Western Railway (BCT Division)' : undefined)
+      badgeId: badgeId,
+      department: department || 'Commuter / Live Traveler Portal'
     });
 
     // Log Activity to Firestore
     try {
       await logUserActivity(fbUser.uid, {
         activityType: 'LOGIN',
-        title: `Logged in as ${role === 'OPERATOR' ? 'Chief Section Controller' : 'Commuter'}`,
+        title: 'Logged in as Commuter',
         details: `Sign-in session initiated from ${cleanEmail} via Firebase Auth.`
       });
     } catch (e) {
@@ -419,11 +398,7 @@ export async function signInUser(
 
     let errorMsg = 'Failed to sign in. Please verify your credentials.';
     if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential' || err.code === 'auth/invalid-login-credentials') {
-      if (role === 'OPERATOR') {
-        errorMsg = 'Operator authentication failed. Please check your credentials or use 1-Click Operator Login.';
-      } else {
-        errorMsg = 'No account found with this email, or password was incorrect. Click "New Registration" to sign up or use 1-Click Demo.';
-      }
+      errorMsg = 'No account found with this email, or password was incorrect. Click "New Registration" to sign up.';
     } else if (err.code === 'auth/wrong-password') {
       errorMsg = 'Incorrect password. Please try again.';
     } else if (err.code === 'auth/too-many-requests') {
@@ -433,12 +408,11 @@ export async function signInUser(
     // Fallback for sandboxed offline preview if network is blocked or Firebase is unavailable
     if (err.message && (err.message.includes('network') || err.message.includes('offline') || err.code === 'auth/network-request-failed' || err.code === 'auth/internal-error')) {
       const fallbackUser: AuthUser = {
-        uid: 'demo-user-' + Math.random().toString(36).substring(2, 8),
+        uid: 'user-' + Math.random().toString(36).substring(2, 8),
         email: cleanEmail,
-        role: role,
-        name: role === 'OPERATOR' ? 'Chief Train Controller' : cleanEmail.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
-        department: role === 'OPERATOR' ? 'Control Office - Western Railway (BCT Division)' : 'Commuter / Live Traveler Portal',
-        badgeId: role === 'OPERATOR' ? 'IR-WR-OP-8492' : undefined,
+        role: 'PASSENGER',
+        name: cleanEmail.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+        department: 'Commuter / Live Traveler Portal',
         loginTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
       return { success: true, user: fallbackUser };
@@ -563,11 +537,18 @@ export async function signUpUser(
 }
 
 /**
- * Sign in with Google Popup
+ * Sign in with Google Popup (Passenger Only)
  */
 export async function signInWithGoogle(
   role: UserRole = 'PASSENGER'
 ): Promise<{ success: boolean; user?: AuthUser; accessToken?: string; error?: string }> {
+  if (role === 'OPERATOR') {
+    return {
+      success: false,
+      error: 'Google login is not available for Operator accounts. Please use official Railway credentials.'
+    };
+  }
+
   try {
     isSigningIn = true;
     const result = await signInWithPopup(auth, googleProvider);
@@ -579,17 +560,17 @@ export async function signInWithGoogle(
     }
 
     try {
-      await syncUserProfileToFirestore(fbUser, role);
+      await syncUserProfileToFirestore(fbUser, 'PASSENGER');
     } catch (e) {
       console.warn('Profile sync note:', e);
     }
 
-    const authUser = formatAuthUser(fbUser, role);
+    const authUser = formatAuthUser(fbUser, 'PASSENGER');
 
     try {
       await logUserActivity(fbUser.uid, {
         activityType: 'LOGIN',
-        title: `Google Sign-in (${role})`,
+        title: `Google Sign-in (PASSENGER)`,
         details: `Authenticated via Google Identity for ${fbUser.email}`
       });
     } catch (e) {
@@ -613,18 +594,17 @@ export async function signInWithGoogle(
       console.info('Using resilient Google Auth session fallback for sandbox environment');
       const fallbackGoogleUser: AuthUser = {
         uid: 'google-user-' + Math.random().toString(36).substring(2, 9),
-        email: role === 'OPERATOR' ? 'trainoperator@gmail.com' : 'dev.dave3033@gmail.com',
-        role: role,
-        name: role === 'OPERATOR' ? 'Chief Train Controller (Google)' : 'Dev Dave (Google User)',
-        department: role === 'OPERATOR' ? 'Control Office - Western Railway (BCT Division)' : 'Commuter / Live Traveler Portal',
-        badgeId: role === 'OPERATOR' ? 'IR-WR-OP-8492' : undefined,
+        email: 'dev.dave3033@gmail.com',
+        role: 'PASSENGER',
+        name: 'Dev Dave (Google User)',
+        department: 'Commuter / Live Traveler Portal',
         loginTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
       
       try {
         await logUserActivity(fallbackGoogleUser.uid, {
           activityType: 'LOGIN',
-          title: `Google Sign-in (${role})`,
+          title: `Google Sign-in (PASSENGER)`,
           details: `Authenticated via Google Identity for ${fallbackGoogleUser.email}`
         });
       } catch (e) {
