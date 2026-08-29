@@ -1,7 +1,8 @@
 import { TrainData, RailwayAlert, AnalyticsSummary, DelayPropagationState } from '../types';
 import { ALL_RUNNING_INDIAN_TRAINS } from './allIndianTrains';
+import { LOCAL_TRAINS } from './localTrains';
 
-export const INITIAL_TRAINS: TrainData[] = ALL_RUNNING_INDIAN_TRAINS;
+export const INITIAL_TRAINS: TrainData[] = [...ALL_RUNNING_INDIAN_TRAINS, ...LOCAL_TRAINS];
 
 export const INITIAL_ALERTS: RailwayAlert[] = [
   {

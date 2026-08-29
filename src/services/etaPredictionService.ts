@@ -11,6 +11,7 @@ import {
   TrackCondition,
   TrafficLevel
 } from '../types';
+import { onlineMLTrainingService } from './onlineMLTrainingService';
 
 /**
  * Utility: Parse HH:MM to total minutes from midnight
@@ -69,44 +70,46 @@ export class MLTrainPredictionModel {
     headwayPenalty: number;
     slackRecoveryRate: number;
   } {
-    // 1. Signal Aspect penalty (Tree Split 1)
+    const weights = onlineMLTrainingService.getWeights();
+
+    // 1. Signal Aspect penalty (Dynamically trained via online gradient descent)
     let signalPenalty = 0;
-    if (features.signalAspect === 'STOP_RED') signalPenalty = 12.0;
-    else if (features.signalAspect === 'CAUTION_YELLOW') signalPenalty = 4.5;
-    else if (features.signalAspect === 'ATTENTION_DOUBLE_YELLOW') signalPenalty = 1.5;
+    if (features.signalAspect === 'STOP_RED') signalPenalty = weights.signalRedPenalty;
+    else if (features.signalAspect === 'CAUTION_YELLOW') signalPenalty = weights.signalYellowPenalty;
+    else if (features.signalAspect === 'ATTENTION_DOUBLE_YELLOW') signalPenalty = weights.signalDoubleYellowPenalty;
 
-    // 2. Track & TSR (Temporary Speed Restriction) (Tree Split 2)
+    // 2. Track & TSR (Temporary Speed Restriction)
     let trackPenalty = 0;
-    if (features.trackCondition === 'RESTRICTED') trackPenalty = 7.5;
-    else if (features.trackCondition === 'CAUTION_TSR') trackPenalty = 3.5;
+    if (features.trackCondition === 'RESTRICTED') trackPenalty = weights.trackRestrictedPenalty;
+    else if (features.trackCondition === 'CAUTION_TSR') trackPenalty = weights.trackTsrPenalty;
 
-    // 3. Weather drag & Fog-PASS limitation (Tree Split 3)
+    // 3. Weather drag & Fog-PASS limitation
     let weatherPenalty = 0;
-    if (features.weather === 'FOG') weatherPenalty = 5.5;
-    else if (features.weather === 'THUNDERSTORM') weatherPenalty = 4.0;
-    else if (features.weather === 'HEAVY_RAIN') weatherPenalty = 2.5;
+    if (features.weather === 'FOG') weatherPenalty = weights.weatherFogPenalty;
+    else if (features.weather === 'THUNDERSTORM') weatherPenalty = weights.weatherStormPenalty;
+    else if (features.weather === 'HEAVY_RAIN') weatherPenalty = weights.weatherRainPenalty;
 
-    // 4. Traffic & Line Headway compression (Tree Split 4)
+    // 4. Traffic & Line Headway compression
     let trafficPenalty = 0;
-    if (features.trafficLevel === 'HIGH') trafficPenalty = 5.0;
-    else if (features.trafficLevel === 'MEDIUM') trafficPenalty = 2.0;
+    if (features.trafficLevel === 'HIGH') trafficPenalty = weights.trafficHighPenalty;
+    else if (features.trafficLevel === 'MEDIUM') trafficPenalty = weights.trafficMediumPenalty;
     else trafficPenalty = -1.0; // Clear section allows running ahead of headway
 
     // 5. Dynamic Headway braking penalty if trailing close to leading train (<6 km)
     let headwayPenalty = 0;
     if (features.precedingTrainGapKm < 3.5) {
-      headwayPenalty = 6.0;
+      headwayPenalty = 6.0 * weights.headwayCompressionFactor;
     } else if (features.precedingTrainGapKm < 6.0) {
-      headwayPenalty = 2.5;
+      headwayPenalty = 2.5 * weights.headwayCompressionFactor;
     }
 
     // 6. Section Engineering Slack Recovery (min per 100km)
-    // When train is running at healthy speed on double lines, IR timetable slack allows 1.5 - 2.5 min recovery per 100km
+    // When train is running at healthy speed on double lines, IR timetable slack allows calibrated recovery
     let slackRecoveryRate = 0;
     if (features.currentSpeedKmH >= 90 && features.trackCondition === 'NORMAL' && features.signalAspect === 'CLEAR_GREEN') {
-      slackRecoveryRate = 2.2; // minutes per 100km
+      slackRecoveryRate = weights.slackRecoveryRatePer100Km;
     } else if (features.currentSpeedKmH >= 70) {
-      slackRecoveryRate = 1.2;
+      slackRecoveryRate = weights.slackRecoveryRatePer100Km * 0.55;
     }
 
     return {

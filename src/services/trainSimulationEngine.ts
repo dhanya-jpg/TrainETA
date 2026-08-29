@@ -1,4 +1,4 @@
-import { TrainData, StationStop } from '../types';
+import { TrainData, StationStop, SignalAspect, WeatherCondition } from '../types';
 import { recalculateTrainETAs } from './etaPredictionService';
 
 /**
@@ -176,28 +176,43 @@ export function advanceTrainPhysics(
   const newLat = Number((activePrevStation.latitude + (activeNextStation.latitude - activePrevStation.latitude) * progressRatio).toFixed(5));
   const newLng = Number((activePrevStation.longitude + (activeNextStation.longitude - activePrevStation.longitude) * progressRatio).toFixed(5));
 
-  // 6. Exact distance to next and previous stops
-  const exactDistToNextKm = Math.max(0, Math.round((activeSegEnd - newProgDist) * 10) / 10);
-  const exactDistFromPrevKm = Math.max(0, Math.round((newProgDist - activeSegStart) * 10) / 10);
+  // 6. Exact distance to next and previous stops (no rounding to preserve exact float progress)
+  const exactDistToNextKm = Math.max(0, activeSegEnd - newProgDist);
+  const exactDistFromPrevKm = Math.max(0, newProgDist - activeSegStart);
 
   // 7. Dynamic contextual location description
   let locationDescription = '';
   if (exactDistFromPrevKm <= 0.8 && newSpeed < 40) {
     locationDescription = `At ${activePrevStation.stationName} (${activePrevStation.stationCode}) • Platform #${activePrevStation.platform}`;
   } else if (exactDistFromPrevKm <= 2.5) {
-    locationDescription = `Departed ${activePrevStation.stationName} (${activePrevStation.stationCode}) • ${exactDistFromPrevKm} km ago`;
+    locationDescription = `Departed ${activePrevStation.stationName} (${activePrevStation.stationCode}) • ${exactDistFromPrevKm.toFixed(1)} km ago`;
   } else if (exactDistToNextKm <= 2.5) {
-    locationDescription = `Approaching ${activeNextStation.stationName} (${activeNextStation.stationCode}) • ${exactDistToNextKm} km remaining • PF #${activeNextStation.platform}`;
+    locationDescription = `Approaching ${activeNextStation.stationName} (${activeNextStation.stationCode}) • ${exactDistToNextKm.toFixed(1)} km remaining • PF #${activeNextStation.platform}`;
   } else {
-    locationDescription = `Between ${activePrevStation.stationCode} & ${activeNextStation.stationCode} • ${exactDistToNextKm} km to ${activeNextStation.stationName}`;
+    locationDescription = `Between ${activePrevStation.stationCode} & ${activeNextStation.stationCode} • ${exactDistToNextKm.toFixed(1)} km to ${activeNextStation.stationName}`;
   }
 
-  // 8. Construct updated train telemetry
+  // 8. Dynamic environmental shifts (Signals clearing, weather fronts, headway variance)
+  let liveSignalAspect: SignalAspect = train.signalAspect;
+  if (train.signalAspect === 'STOP_RED' && newSpeed > 0) {
+    liveSignalAspect = 'CAUTION_YELLOW';
+  } else if (train.signalAspect === 'CAUTION_YELLOW' && distFromPrevKm > 2.0 && train.precedingTrainGapKm > 5.0) {
+    liveSignalAspect = 'CLEAR_GREEN';
+  } else if (train.signalAspect === 'ATTENTION_DOUBLE_YELLOW' && distToNextKm < 1.5) {
+    liveSignalAspect = 'CAUTION_YELLOW';
+  }
+
+  // Preceding train gap adjusts realistically based on current train speed and physics
+  const liveGapKm = Math.max(1.8, Math.min(18.0, Number((train.precedingTrainGapKm + (newSpeed > 80 ? 0.05 : -0.05) * deltaSeconds).toFixed(1))));
+
+  // Construct updated train telemetry
   const interimTrain: TrainData = {
     ...train,
     currentLatitude: newLat,
     currentLongitude: newLng,
     currentSpeedKmH: newSpeed,
+    signalAspect: liveSignalAspect,
+    precedingTrainGapKm: liveGapKm,
     currentStationIndex: activeIndex,
     nextStationCode: activeNextStation.stationCode,
     nextStationName: activeNextStation.stationName,

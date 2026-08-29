@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Sidebar, NavigationTab } from './components/layout/Sidebar';
 import { TopNav } from './components/layout/TopNav';
-import { StatCards } from './components/dashboard/StatCards';
 import { SelectedTrainBanner } from './components/dashboard/SelectedTrainBanner';
 import { LiveTrainMap } from './components/map/LiveTrainMap';
 import { StationETATable } from './components/prediction/StationETATable';
@@ -30,6 +29,7 @@ import { MOCK_TRAINS, MOCK_ALERTS, MOCK_ANALYTICS } from './data/mockTrains';
 import { TrainData, UserRole, RailwayAlert, AnalyticsSummary, AuthUser } from './types';
 import { recalculateTrainETAs } from './services/etaPredictionService';
 import { advanceTrainPhysics } from './services/trainSimulationEngine';
+import { onlineMLTrainingService } from './services/onlineMLTrainingService';
 import { logUserActivity, logRecentSearch, logoutFirebase } from './services/firebase';
 
 const STORAGE_KEY = 'smart_eta_auth_user_v2';
@@ -239,6 +239,13 @@ export function App() {
     return () => clearInterval(timer);
   }, [isSimulating, simSpeed, currentUser]);
 
+  // Feed live telemetry updates into Online ML Service in a safe React effect lifecycle
+  useEffect(() => {
+    if (isSimulating && trains.length > 0) {
+      onlineMLTrainingService.ingestTelemetryAndTrain(trains);
+    }
+  }, [trains, isSimulating]);
+
   // Sync selectedTrain whenever trains array updates
   useEffect(() => {
     const updatedSelected = trains.find((t) => t.id === selectedTrain.id);
@@ -357,6 +364,13 @@ export function App() {
           onToggleTheme={toggleTheme}
           onSearchTrain={handleSelectTrainByNumber}
           onOpenAICopilot={() => setActiveTab('ai-copilot')}
+          onOpenMLAnalytics={() => {
+            if (userRole === 'OPERATOR') {
+              setActiveTab('analytics');
+            } else {
+              setActiveTab('ai-copilot');
+            }
+          }}
           trains={trains}
           selectedTrain={selectedTrain}
           onSelectTrain={handleSelectTrain}
@@ -394,14 +408,10 @@ export function App() {
               {/* TAB: Dashboard (Operator) */}
               {activeTab === 'dashboard' && userRole === 'OPERATOR' && (
                 <div className="space-y-8">
-                  {/* Stat Cards */}
-                  <StatCards
-                    analytics={analytics}
-                    onCardClick={(type) => {
-                      if (type === 'accuracy') setActiveTab('analytics');
-                      else if (type === 'delayed') setActiveTab('railway-control');
-                    }}
-                  />
+                  <div className="pt-2 pb-2">
+                    <h1 className="text-3xl sm:text-5xl font-display font-bold text-ink tracking-tight">SMART ETA Live Tracking</h1>
+                    <p className="text-ink/60 mt-2 sm:mt-3 font-mono-code text-sm sm:text-base uppercase tracking-wider">Operator Control Dashboard</p>
+                  </div>
 
                   {/* Selected Train Banner */}
                   <SelectedTrainBanner

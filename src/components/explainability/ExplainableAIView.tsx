@@ -117,7 +117,7 @@ export const ExplainableAIView: React.FC<ExplainableAIViewProps> = ({ train }) =
 
         <div className="text-[11px] text-ink/60 italic pt-1 border-t border-border flex items-center gap-1.5 font-mono-code">
           <Sparkles className="w-3 h-3 text-accent" />
-          <span>Note: Explanations are derived from feature importance weights of the XGBoost dynamic residual model.</span>
+          <span>Note: Explanations are dynamically derived from real-time calibrated weights of the Online XGBoost SGD engine.</span>
         </div>
       </div>
     </div>

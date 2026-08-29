@@ -56,6 +56,21 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
   const [destinationCode, setDestinationCode] = useState(selectedTrain.destination);
   const [copiedNotification, setCopiedNotification] = useState(false);
 
+  // Live PNR States
+  const [pnrData, setPnrData] = useState<any>(null);
+  const [pnrLoading, setPnrLoading] = useState(false);
+  const [pnrError, setPnrError] = useState<string | null>(null);
+
+  // Live Schedule States
+  const [scheduleData, setScheduleData] = useState<any>(null);
+  const [scheduleLoading, setScheduleLoading] = useState(false);
+  const [scheduleError, setScheduleError] = useState<string | null>(null);
+
+  // Live Search Train States
+  const [searchTrainData, setSearchTrainData] = useState<any>(null);
+  const [searchTrainLoading, setSearchTrainLoading] = useState(false);
+  const [searchTrainError, setSearchTrainError] = useState<string | null>(null);
+
   // Find target stop in the selected train
   const targetStop: StationStop = 
     selectedTrain.stops.find((s) => s.stationCode === destinationCode) || 
@@ -65,14 +80,108 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
   const predictedMins = parseTimeToMinutes(targetStop.predictedArrival);
   const suggestedStationArrival = formatMinutesToTime(predictedMins - 18);
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
+    const query = searchNo.trim();
+
+    // Reset Search Train Data
+    setSearchTrainData(null);
+    setSearchTrainError(null);
+
+    // Handle 10-digit live PNR API request
+    if (/^\d{10}$/.test(query)) {
+      setPnrLoading(true);
+      setPnrError(null);
+      setPnrData(null);
+      setScheduleData(null);
+      setScheduleError(null);
+      try {
+        const response = await fetch(`/api/pnr/${query}`);
+        const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to fetch PNR status from IRCTC');
+        }
+        
+        setPnrData(data);
+      } catch (err: any) {
+        setPnrError(err.message || 'Unable to fetch PNR data');
+      } finally {
+        setPnrLoading(false);
+      }
+      return;
+    }
+
+    // Handle 5-digit live Train Schedule API request
+    if (/^\d{5}$/.test(query)) {
+      setScheduleLoading(true);
+      setScheduleError(null);
+      setScheduleData(null);
+      setPnrData(null);
+      setPnrError(null);
+      
+      try {
+        // Fetch Official IRCTC Live Telemetry (via RailRadar proxy in server)
+        const tsResponse = await fetch(`/api/train-status/${query}`);
+        const tsData = await tsResponse.json();
+        
+        if (tsResponse.ok && tsData.success) {
+          onSelectTrain(tsData.data);
+          setDestinationCode(tsData.data.destination);
+        } else {
+          // Fallback to local simulated array if API fails
+          const found = trains.find((t) => t.trainNumber === query);
+          if (found) {
+            onSelectTrain(found);
+            setDestinationCode(found.destination);
+          }
+        }
+
+        // Parallel fetch for Schedule Table view
+        const response = await fetch(`/api/schedule/${query}`);
+        const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to fetch train schedule from IRCTC');
+        }
+        
+        setScheduleData(data);
+      } catch (err: any) {
+        setScheduleError(err.message || 'Unable to fetch Train Schedule data');
+      } finally {
+        setScheduleLoading(false);
+      }
+      return; // Stop execution, we already loaded the train (live or sim)
+    } else if (query.length >= 2 && !/^\d{10}$/.test(query)) {
+      // General Train Search query
+      setSearchTrainLoading(true);
+      setPnrData(null);
+      setPnrError(null);
+      try {
+        const response = await fetch(`/api/search-train?query=${encodeURIComponent(query)}`);
+        const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to search trains from IRCTC');
+        }
+        
+        setSearchTrainData(data);
+      } catch (err: any) {
+        setSearchTrainError(err.message || 'Unable to search trains');
+      } finally {
+        setSearchTrainLoading(false);
+      }
+    }
+
+    // Default simulation search
     const found = trains.find(
-      (t) => t.trainNumber === searchNo.trim() || t.trainName.toLowerCase().includes(searchNo.toLowerCase())
+      (t) => t.trainNumber === query || t.trainName.toLowerCase().includes(query.toLowerCase())
     );
     if (found) {
       onSelectTrain(found);
       setDestinationCode(found.destination);
+      setPnrData(null);
+      setPnrError(null);
     }
   };
 
@@ -106,6 +215,50 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
   return (
     <div className="w-full space-y-6 lg:space-y-8 max-w-7xl mx-auto pb-12 overflow-x-hidden text-ink">
       
+      <div className="pt-2 pb-2">
+        <h1 className="text-3xl sm:text-5xl font-display font-bold text-ink tracking-tight">SMART ETA Live Tracking</h1>
+        <p className="text-ink/60 mt-2 sm:mt-3 font-mono-code text-sm sm:text-base uppercase tracking-wider">Passenger Commuter Portal</p>
+        
+        {/* Central Search Form */}
+        <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-12 gap-3 mt-6">
+          <div className="md:col-span-5 lg:col-span-4">
+            <div className="relative">
+              <Search className="w-5 h-5 text-ink/40 absolute left-4 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={searchNo}
+                onChange={(e) => setSearchNo(e.target.value)}
+                placeholder="Search Train No. (e.g. 22436, 12951...)"
+                className="w-full pl-12 pr-4 py-3.5 bg-surface border border-border rounded-xl text-base font-bold text-ink focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent"
+              />
+            </div>
+          </div>
+          <div className="md:col-span-4 lg:col-span-6">
+            <select
+              value={destinationCode}
+              onChange={(e) => setDestinationCode(e.target.value)}
+              className="w-full px-4 py-3.5 bg-surface border border-border rounded-xl text-base font-bold text-ink focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent truncate"
+            >
+              {selectedTrain.stops.map((s) => (
+                <option key={s.stationCode} value={s.stationCode} className="bg-surface text-ink">
+                  Target Destination: {s.stationName} ({s.stationCode})
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="md:col-span-3 lg:col-span-2 flex items-stretch">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              type="submit"
+              className="w-full min-h-[50px] bg-accent hover:opacity-90 text-on-accent rounded-xl text-sm font-bold uppercase tracking-wider transition-opacity cursor-pointer flex items-center justify-center border-none shadow-xs"
+            >
+              Track Live
+            </motion.button>
+          </div>
+        </form>
+      </div>
+
       {/* 1. COMPACT HEADER BAR */}
       <motion.section 
         layoutId="passenger-header"
@@ -126,6 +279,10 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
                 {selectedTrain.currentDelayMinutes > 0
                   ? `+${selectedTrain.currentDelayMinutes} MIN DELAYED`
                   : 'RUNNING ON SCHEDULE'}
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-orange-500/10 text-orange-600 dark:text-orange-400 text-xs font-mono-code font-bold uppercase tracking-wider border border-orange-500/30">
+                <AlertCircle className="w-3 h-3" />
+                PREDICTIVE SIMULATION MODE
               </span>
             </div>
 
@@ -162,6 +319,205 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
           </div>
         </div>
       </motion.section>
+
+      {/* LIVE PNR DATA SECTION (Rendered only if valid PNR fetched) */}
+      <AnimatePresence>
+        {(pnrLoading || pnrError || pnrData) && (
+          <motion.section
+            initial={{ opacity: 0, height: 0, scale: 0.98 }}
+            animate={{ opacity: 1, height: 'auto', scale: 1 }}
+            exit={{ opacity: 0, height: 0, scale: 0.98 }}
+            className="bg-surface p-6 sm:p-8 rounded-3xl border border-accent/40 shadow-xs relative overflow-hidden"
+          >
+            {pnrLoading && (
+              <div className="flex flex-col items-center justify-center py-6 gap-3">
+                <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+                <span className="font-mono-code text-xs uppercase tracking-widest text-ink/60">Fetching Live IRCTC PNR Status...</span>
+              </div>
+            )}
+            
+            {pnrError && (
+              <div className="flex flex-col items-center justify-center py-6 gap-3 text-red-500">
+                <AlertCircle className="w-8 h-8 opacity-80" />
+                <span className="font-mono-code text-sm uppercase tracking-wider">{pnrError}</span>
+              </div>
+            )}
+
+            {pnrData && !pnrLoading && !pnrError && (
+              <div className="space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
+                  <div>
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-accent/10 text-accent text-[10px] font-mono-code font-bold uppercase tracking-widest mb-2">
+                      <ShieldCheck className="w-3 h-3" /> VERIFIED IRCTC TICKET
+                    </div>
+                    <h2 className="text-xl sm:text-2xl font-display font-bold uppercase tracking-tight">
+                      PNR: {pnrData?.data?.pnr_number || pnrData?.pnr_number || searchNo}
+                    </h2>
+                    <p className="text-sm font-medium text-ink/70">
+                      {pnrData?.data?.train_number || pnrData?.train_number} • {pnrData?.data?.train_name || pnrData?.train_name}
+                    </p>
+                  </div>
+                  <div className="text-left sm:text-right">
+                    <p className="text-xs font-mono-code uppercase text-ink/60 tracking-wider">Journey Date</p>
+                    <p className="text-lg font-bold">{pnrData?.data?.journey_date || pnrData?.journey_date || 'N/A'}</p>
+                    <p className="text-sm font-medium text-ink/70">Class: {pnrData?.data?.class || pnrData?.class || 'N/A'}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-xs font-mono-code font-bold uppercase tracking-widest text-ink/50 mb-4">Passenger Status</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    {(pnrData?.data?.passengers || pnrData?.passengers || []).map((pax: any, idx: number) => (
+                      <div key={idx} className="bg-surface-dark p-4 rounded-xl border border-border flex flex-col justify-between">
+                        <span className="text-[10px] font-mono-code uppercase tracking-wider text-ink/60 mb-1">Passenger {idx + 1}</span>
+                        <div className="font-bold text-lg">{pax.current_status || pax.currentStatus || 'CONFIRMED'}</div>
+                        <div className="text-xs font-medium text-ink/70 mt-1">Booking: {pax.booking_status || pax.bookingStatus || 'N/A'}</div>
+                      </div>
+                    ))}
+                    {!(pnrData?.data?.passengers || pnrData?.passengers)?.length && (
+                      <div className="text-sm text-ink/60 italic">Passenger details unavailable for this PNR.</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </motion.section>
+        )}
+      </AnimatePresence>
+
+      {/* LIVE TRAIN SCHEDULE SECTION (Rendered only if valid Schedule fetched) */}
+      <AnimatePresence>
+        {(scheduleLoading || scheduleError || scheduleData) && (
+          <motion.section
+            initial={{ opacity: 0, height: 0, scale: 0.98 }}
+            animate={{ opacity: 1, height: 'auto', scale: 1 }}
+            exit={{ opacity: 0, height: 0, scale: 0.98 }}
+            className="bg-surface p-6 sm:p-8 rounded-3xl border border-accent/40 shadow-xs relative overflow-hidden mt-6"
+          >
+            {scheduleLoading && (
+              <div className="flex flex-col items-center justify-center py-6 gap-3">
+                <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+                <span className="font-mono-code text-xs uppercase tracking-widest text-ink/60">Fetching Live Train Schedule...</span>
+              </div>
+            )}
+            
+            {scheduleError && (
+              <div className="flex flex-col items-center justify-center py-6 gap-3 text-red-500">
+                <AlertCircle className="w-8 h-8 opacity-80" />
+                <span className="font-mono-code text-sm uppercase tracking-wider">{scheduleError}</span>
+              </div>
+            )}
+
+            {scheduleData && !scheduleLoading && !scheduleError && (
+              <div className="space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
+                  <div>
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] font-mono-code font-bold uppercase tracking-widest mb-2 border border-blue-500/20">
+                      <Clock className="w-3 h-3" /> OFFICIAL LIVE SCHEDULE
+                    </div>
+                    <h2 className="text-xl sm:text-2xl font-display font-bold uppercase tracking-tight">
+                      {scheduleData?.data?.trainName || scheduleData?.trainName || 'Train'} ({scheduleData?.data?.trainNumber || scheduleData?.trainNumber || searchNo})
+                    </h2>
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-border/50 text-xs font-mono-code uppercase tracking-wider text-ink/50">
+                        <th className="py-3 px-4">Station</th>
+                        <th className="py-3 px-4">Arrive</th>
+                        <th className="py-3 px-4">Depart</th>
+                        <th className="py-3 px-4">Dist (km)</th>
+                        <th className="py-3 px-4">Day</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-sm">
+                      {(scheduleData?.data?.route || scheduleData?.route || scheduleData?.data?.stationList || scheduleData?.stationList || []).map((stop: any, idx: number) => (
+                        <tr key={idx} className="border-b border-border/20 last:border-0 hover:bg-surface-dark/50 transition-colors">
+                          <td className="py-3 px-4 font-medium">
+                            {stop.stationName || stop.station_name} <span className="text-xs text-ink/50 font-mono-code">({stop.stationCode || stop.station_code})</span>
+                          </td>
+                          <td className="py-3 px-4 font-mono-code">{stop.arrivalTime || stop.arrival_time || '--'}</td>
+                          <td className="py-3 px-4 font-mono-code">{stop.departureTime || stop.departure_time || '--'}</td>
+                          <td className="py-3 px-4">{stop.distance || stop.distanceFromSource || stop.distance_from_source || 0}</td>
+                          <td className="py-3 px-4">{stop.day || stop.day_of_journey || 1}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {!(scheduleData?.data?.route || scheduleData?.route || scheduleData?.data?.stationList || scheduleData?.stationList)?.length && (
+                    <div className="text-sm text-ink/60 italic py-4 px-4">Schedule route details unavailable.</div>
+                  )}
+                </div>
+              </div>
+            )}
+          </motion.section>
+        )}
+      </AnimatePresence>
+
+      {/* LIVE TRAIN SEARCH RESULTS SECTION (Rendered only if valid Search fetched) */}
+      <AnimatePresence>
+        {(searchTrainLoading || searchTrainError || searchTrainData) && (
+          <motion.section
+            initial={{ opacity: 0, height: 0, scale: 0.98 }}
+            animate={{ opacity: 1, height: 'auto', scale: 1 }}
+            exit={{ opacity: 0, height: 0, scale: 0.98 }}
+            className="bg-surface p-6 sm:p-8 rounded-3xl border border-accent/40 shadow-xs relative overflow-hidden mt-6"
+          >
+            {searchTrainLoading && (
+              <div className="flex flex-col items-center justify-center py-6 gap-3">
+                <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+                <span className="font-mono-code text-xs uppercase tracking-widest text-ink/60">Searching IRCTC Trains...</span>
+              </div>
+            )}
+            
+            {searchTrainError && (
+              <div className="flex flex-col items-center justify-center py-6 gap-3 text-red-500">
+                <AlertCircle className="w-8 h-8 opacity-80" />
+                <span className="font-mono-code text-sm uppercase tracking-wider">{searchTrainError}</span>
+              </div>
+            )}
+
+            {searchTrainData && !searchTrainLoading && !searchTrainError && (
+              <div className="space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
+                  <div>
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[10px] font-mono-code font-bold uppercase tracking-widest mb-2 border border-purple-500/20">
+                      <Train className="w-3 h-3" /> OFFICIAL IRCTC TRAIN DIRECTORY
+                    </div>
+                    <h2 className="text-xl sm:text-2xl font-display font-bold uppercase tracking-tight">
+                      Search Results for "{searchNo}"
+                    </h2>
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-border/50 text-xs font-mono-code uppercase tracking-wider text-ink/50">
+                        <th className="py-3 px-4">Train Number</th>
+                        <th className="py-3 px-4">Train Name</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-sm">
+                      {(searchTrainData?.data || searchTrainData?.trains || []).map((train: any, idx: number) => (
+                        <tr key={idx} className="border-b border-border/20 last:border-0 hover:bg-surface-dark/50 transition-colors">
+                          <td className="py-3 px-4 font-mono-code font-medium">{train.trainNumber || train.train_number || '--'}</td>
+                          <td className="py-3 px-4 font-bold">{train.trainName || train.train_name || '--'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {!(searchTrainData?.data || searchTrainData?.trains)?.length && (
+                    <div className="text-sm text-ink/60 italic py-4 px-4">No trains found matching this query.</div>
+                  )}
+                </div>
+              </div>
+            )}
+          </motion.section>
+        )}
+      </AnimatePresence>
 
       {/* 2. SIGNATURE STAT METRICS (3-Column Dense Grid) */}
       <motion.section 
@@ -248,51 +604,6 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
           ))}
         </div>
 
-        <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-12 gap-5 pt-4 border-t border-border">
-          <div className="md:col-span-5 lg:col-span-4">
-            <label className="font-mono-code text-[11px] font-bold text-ink/50 uppercase tracking-widest block mb-2">
-              Search Train No. or Name
-            </label>
-            <div className="relative">
-              <Train className="w-5 h-5 text-ink/40 absolute left-4 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                value={searchNo}
-                onChange={(e) => setSearchNo(e.target.value)}
-                placeholder="e.g. 22436, 12951..."
-                className="w-full pl-12 pr-4 py-3 bg-surface-dark border border-border rounded-xl text-sm font-bold text-ink focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent"
-              />
-            </div>
-          </div>
-
-          <div className="md:col-span-4 lg:col-span-6">
-            <label className="font-mono-code text-[11px] font-bold text-ink/50 uppercase tracking-widest block mb-2">
-              Select Your Destination Station
-            </label>
-            <select
-              value={destinationCode}
-              onChange={(e) => setDestinationCode(e.target.value)}
-              className="w-full px-4 py-3 bg-surface-dark border border-border rounded-xl text-sm font-bold text-ink focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent truncate"
-            >
-              {selectedTrain.stops.map((s) => (
-                <option key={s.stationCode} value={s.stationCode} className="bg-surface text-ink">
-                  {s.stationName} ({s.stationCode}) — Sch {s.scheduledArrival} | AI: {s.predictedArrival}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="md:col-span-3 lg:col-span-2 flex items-end">
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              type="submit"
-              className="w-full h-[46px] bg-accent hover:opacity-90 text-on-accent rounded-xl text-sm font-bold uppercase tracking-wider transition-opacity cursor-pointer flex items-center justify-center border-none shadow-xs"
-            >
-              Apply Filter
-            </motion.button>
-          </div>
-        </form>
 
         {/* View Mode Navigation Tabs */}
         <div className="flex items-center gap-3 pt-5 border-t border-border overflow-x-auto pb-2 scrollbar-thin">

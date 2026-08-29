@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, Moon, Sun, Bell, Menu, History, BrainCircuit, Sparkles, Play, Pause, FastForward, Shield, User, LogOut, ChevronDown } from 'lucide-react';
+import { Search, Moon, Sun, Bell, Menu, History, BrainCircuit, Sparkles, Play, Pause, FastForward, Shield, User, LogOut, ChevronDown, Zap } from 'lucide-react';
 import { TrainData, UserRole, AuthUser } from '../../types';
+import { onlineMLTrainingService, MLTrainingState } from '../../services/onlineMLTrainingService';
 
 interface TopNavProps {
   onToggleMobileSidebar?: () => void;
@@ -8,6 +9,7 @@ interface TopNavProps {
   onToggleTheme?: () => void;
   onSearchTrain?: (query: string) => void;
   onOpenAICopilot?: () => void;
+  onOpenMLAnalytics?: () => void;
   trains?: TrainData[];
   selectedTrain?: TrainData | null;
   onSelectTrain?: (train: TrainData) => void;
@@ -30,6 +32,7 @@ export const TopNav: React.FC<TopNavProps> = ({
   onToggleTheme,
   onSearchTrain,
   onOpenAICopilot,
+  onOpenMLAnalytics,
   unreadAlertsCount = 0,
   onOpenAlerts,
   isSimulating,
@@ -44,7 +47,13 @@ export const TopNav: React.FC<TopNavProps> = ({
 }) => {
   const [searchVal, setSearchVal] = useState('');
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [mlState, setMlState] = useState<MLTrainingState>(onlineMLTrainingService.getState());
   const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const unsub = onlineMLTrainingService.subscribe((s) => setMlState({ ...s }));
+    return unsub;
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -69,25 +78,43 @@ export const TopNav: React.FC<TopNavProps> = ({
         {onToggleMobileSidebar && (
           <button
             onClick={onToggleMobileSidebar}
-            className="p-2 text-ink hover:bg-black/5 dark:hover:bg-white/5 rounded-md transition-colors"
+            className="p-2 text-ink hover:bg-black/5 dark:hover:bg-white/5 rounded-md transition-colors lg:hidden"
           >
             <Menu className="w-6 h-6" />
           </button>
         )}
         
-        <form onSubmit={handleSearchSubmit} className="relative w-full max-w-xl">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-ink/40" />
-          <input
-            type="text"
-            value={searchVal}
-            onChange={(e) => setSearchVal(e.target.value)}
-            placeholder="Search train by number (e.g. 22436, 12951, 12802)..."
-            className="w-full pl-12 pr-4 py-3.5 bg-surface rounded-xl text-sm sm:text-base text-ink placeholder:text-ink/40 focus:outline-none focus:ring-2 focus:ring-accent font-medium transition-all shadow-sm border border-border"
-          />
-        </form>
+        {/* Header Branding */}
+        <div className="flex items-center gap-2 mr-2 sm:mr-4">
+          <div className="w-8 h-8 rounded-xl bg-accent flex items-center justify-center text-on-accent shadow-sm shrink-0">
+            <Zap className="w-5 h-5" />
+          </div>
+          <div className="flex flex-col shrink-0">
+            <span className="font-display font-bold text-lg sm:text-xl tracking-tight leading-none text-ink">SMART ETA</span>
+            <span className="text-[9px] sm:text-[10px] uppercase font-mono-code tracking-widest text-ink/50 leading-none mt-1">Live Tracking</span>
+          </div>
+        </div>
       </div>
 
       <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+        {/* ML Online Training Live Badge */}
+        <button
+          onClick={onOpenMLAnalytics}
+          className={`hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-mono-code font-bold transition-all border cursor-pointer ${
+            mlState.isTrainingActive
+              ? 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 shadow-xs'
+              : 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 border-amber-500/30'
+          }`}
+          title="Click to view real-time continuous ML Training & loss convergence"
+        >
+          <BrainCircuit className={`w-3.5 h-3.5 ${mlState.isTrainingActive ? 'text-emerald-500 animate-pulse' : 'text-amber-500'}`} />
+          <div className="flex items-center gap-1.5">
+            <span className="hidden xl:inline">ML Self-Train:</span>
+            <span>E#{mlState.totalEpochs}</span>
+            <span className="text-[10px] opacity-75">(±{mlState.fleetMAE.toFixed(1)}m)</span>
+          </div>
+        </button>
+
         {/* Simulation Controls if available */}
         {onToggleSimulating && (
           <div className="hidden xl:flex items-center gap-1 bg-surface p-1 rounded-xl border border-border text-xs font-mono-code">
@@ -113,21 +140,6 @@ export const TopNav: React.FC<TopNavProps> = ({
             )}
           </div>
         )}
-
-        {onOpenAICopilot && (
-          <button
-            onClick={onOpenAICopilot}
-            className="flex items-center gap-2 px-3.5 py-2 bg-accent/15 hover:bg-accent hover:text-on-accent text-accent rounded-xl text-xs font-bold transition-all cursor-pointer border border-accent/30"
-          >
-            <Sparkles className="w-4 h-4 animate-pulse" />
-            <span className="hidden sm:inline">AI Copilot</span>
-          </button>
-        )}
-
-        <div className="hidden md:flex items-center gap-2 text-accent text-xs font-bold font-mono-code tracking-widest uppercase">
-          <span className="w-2 h-2 rounded-full bg-accent animate-pulse shadow-[0_0_8px_var(--accent)]"></span>
-          GPS Synced
-        </div>
 
         <div className="h-6 w-px bg-ink/10 hidden md:block"></div>
 

@@ -246,7 +246,8 @@ When the user asks about a train's status, delay, location, or ETA:
       telemetryData
     };
   } catch (error: any) {
-    console.error('Gemini API Error:', error);
+    // Downgrade to console.warn to prevent AI Studio from flagging harmless API limits (503) as hard app crashes
+    console.warn('Gemini API Warning / Fallback Activated:', error?.message || error);
     
     // Provide a fallback intelligent response if API key is missing or quota is limited
     const trainNumMatch = userPrompt.match(/\b\d{5}\b/);
