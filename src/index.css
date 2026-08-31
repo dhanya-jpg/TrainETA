@@ -88,3 +88,31 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--accent);
 }
+
+/* Leaflet Custom Tooltip & Marker Overrides */
+.leaflet-container {
+  font-family: inherit;
+  width: 100%;
+  height: 100%;
+  background-color: #0b1329 !important;
+}
+
+.custom-station-tooltip {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5) !important;
+  padding: 6px 10px !important;
+}
+
+.custom-station-tooltip .leaflet-tooltip-pane {
+  z-index: 1000 !important;
+}
+
+.station-marker-icon,
+.live-train-marker-icon,
+.user-location-marker-icon {
+  background: transparent !important;
+  border: none !important;
+}

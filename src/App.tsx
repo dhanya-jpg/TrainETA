@@ -24,7 +24,6 @@ import { UserActivityModal } from './components/activity/UserActivityModal';
 import { SmoothScroll } from './components/layout/SmoothScroll';
 import { AmbientBackground } from './components/layout/AmbientBackground';
 
-import { APIProvider } from '@vis.gl/react-google-maps';
 import { MOCK_TRAINS, MOCK_ALERTS, MOCK_ANALYTICS } from './data/mockTrains';
 import { TrainData, UserRole, RailwayAlert, AnalyticsSummary, AuthUser } from './types';
 import { recalculateTrainETAs } from './services/etaPredictionService';
@@ -269,9 +268,7 @@ export function App() {
   const unreadAlertsCount = alerts.filter((a) => !a.isAcknowledged).length;
 
   return (
-    <APIProvider apiKey={(import.meta as any).env.VITE_GOOGLE_MAPS_API_KEY || ''} libraries={['marker', 'geometry']}>
-      
-      <div className="flex h-[100dvh] w-full overflow-hidden bg-bg font-sans text-ink antialiased">
+    <div className="flex h-[100dvh] w-full overflow-hidden bg-bg font-sans text-ink antialiased">
         {/* Landing / System Overview Modal */}
       <LandingModal
         isOpen={isLandingModalOpen}
@@ -619,7 +616,6 @@ export function App() {
         </SmoothScroll>
       </div>
     </div>
-    </APIProvider>
   );
 }
 

@@ -1,12 +1,12 @@
 {
-  "projectId": "virtual-period-2xfhk",
-  "appId": "1:750601221333:web:082ece86cf3cbd92c45e5c",
-  "apiKey": "AIzaSyCjTIXj5tMkwIpPopHEgmF0IlbO7Y3yrxI",
-  "authDomain": "virtual-period-2xfhk.firebaseapp.com",
+  "projectId": "smartraineta",
+  "appId": "1:310347973796:web:13a36df68aea972d3b9231",
+  "apiKey": "AIzaSyA_PLvY47BVZZjGVGhCJKDs5Tl1zdExgds",
+  "authDomain": "smartraineta.firebaseapp.com",
   "firestoreDatabaseId": "ai-studio-smarteta-d496b8a9-4ed4-45c8-af1d-03b94ab42c42",
-  "storageBucket": "virtual-period-2xfhk.firebasestorage.app",
-  "messagingSenderId": "750601221333",
-  "measurementId": "",
+  "storageBucket": "smartraineta.firebasestorage.app",
+  "messagingSenderId": "310347973796",
+  "measurementId": "G-VTPD8Q26JF",
   "oAuthClientId": "750601221333-onahnp83vo5jtq0r6k5qqfr2qhsjrjpu.apps.googleusercontent.com",
   "recaptchaSiteKey": ""
 }
