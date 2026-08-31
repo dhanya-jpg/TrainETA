@@ -104,7 +104,7 @@ export const LOCAL_TRAINS: TrainData[] = [
     nextStationName: 'Sawai Madhopur',
     distanceToNextStationKm: 5,
     lastUpdated: 'Live GPS • 20:45 IST',
-    signalAspect: 'DOUBLE_YELLOW',
+    signalAspect: 'ATTENTION_DOUBLE_YELLOW',
     weather: 'CLEAR',
     trackCondition: 'NORMAL',
     trafficLevel: 'MEDIUM',
@@ -117,7 +117,7 @@ export const LOCAL_TRAINS: TrainData[] = [
     stops: [
       { stationCode: 'JP', stationName: 'Jaipur Jn', distanceKm: 0, latitude: 26.9200, longitude: 75.7878, scheduledArrival: '18:25 (Day 1)', scheduledDeparture: '18:25', predictedArrival: '18:25', predictedDeparture: '18:25', predictedDelayMinutes: 0, confidenceScore: 100, etaRange: '-', riskLevel: 'LOW', status: 'DEPARTED', platform: 4, historicalAvgHaltMins: 0 },
       { stationCode: 'DPA', stationName: 'Durgapura', distanceKm: 8, latitude: 26.8436, longitude: 75.7954, scheduledArrival: '18:35 (Day 1)', scheduledDeparture: '18:38', predictedArrival: '18:35', predictedDeparture: '18:38', predictedDelayMinutes: 0, confidenceScore: 100, etaRange: '-', riskLevel: 'LOW', status: 'DEPARTED', platform: 1, historicalAvgHaltMins: 3 },
-      { stationCode: 'SWM', stationName: 'Sawai Madhopur', distanceKm: 132, latitude: 26.0156, longitude: 76.3601, scheduledArrival: '20:30 (Day 1)', scheduledDeparture: '20:45', predictedArrival: '20:40', predictedDeparture: '20:55', predictedDelayMinutes: 10, confidenceScore: 96, etaRange: '20:40 - 20:45', riskLevel: 'MODERATE', status: 'NEXT', platform: 2, historicalAvgHaltMins: 15 },
+      { stationCode: 'SWM', stationName: 'Sawai Madhopur', distanceKm: 132, latitude: 26.0156, longitude: 76.3601, scheduledArrival: '20:30 (Day 1)', scheduledDeparture: '20:45', predictedArrival: '20:40', predictedDeparture: '20:55', predictedDelayMinutes: 10, confidenceScore: 96, etaRange: '20:40 - 20:45', riskLevel: 'MEDIUM', status: 'NEXT', platform: 2, historicalAvgHaltMins: 15 },
       { stationCode: 'KOTA', stationName: 'Kota Jn', distanceKm: 240, latitude: 25.2238, longitude: 75.8753, scheduledArrival: '22:20 (Day 1)', scheduledDeparture: '22:20', predictedArrival: '22:30', predictedDeparture: '22:30', predictedDelayMinutes: 10, confidenceScore: 94, etaRange: '22:25 - 22:35', riskLevel: 'LOW', status: 'UPCOMING', platform: 1, historicalAvgHaltMins: 0 }
     ],
     explainability: []
@@ -184,7 +184,7 @@ export const LOCAL_TRAINS: TrainData[] = [
     nextStationName: 'Hazrat Nizamuddin',
     distanceToNextStationKm: 4,
     lastUpdated: 'Live GPS • 10:12 IST',
-    signalAspect: 'RED',
+    signalAspect: 'STOP_RED',
     weather: 'CLEAR',
     trackCondition: 'NORMAL',
     trafficLevel: 'HIGH',
@@ -196,7 +196,7 @@ export const LOCAL_TRAINS: TrainData[] = [
     destinationRisk: 'HIGH',
     stops: [
       { stationCode: 'PWL', stationName: 'Palwal', distanceKm: 0, latitude: 28.1487, longitude: 77.3320, scheduledArrival: '09:00 (Day 1)', scheduledDeparture: '09:00', predictedArrival: '09:00', predictedDeparture: '09:00', predictedDelayMinutes: 0, confidenceScore: 100, etaRange: '-', riskLevel: 'LOW', status: 'DEPARTED', platform: 1, historicalAvgHaltMins: 0 },
-      { stationCode: 'FDB', stationName: 'Faridabad', distanceKm: 29, latitude: 28.4124, longitude: 77.3197, scheduledArrival: '09:35 (Day 1)', scheduledDeparture: '09:36', predictedArrival: '09:40', predictedDeparture: '09:41', predictedDelayMinutes: 5, confidenceScore: 100, etaRange: '-', riskLevel: 'MODERATE', status: 'DEPARTED', platform: 2, historicalAvgHaltMins: 1 },
+      { stationCode: 'FDB', stationName: 'Faridabad', distanceKm: 29, latitude: 28.4124, longitude: 77.3197, scheduledArrival: '09:35 (Day 1)', scheduledDeparture: '09:36', predictedArrival: '09:40', predictedDeparture: '09:41', predictedDelayMinutes: 5, confidenceScore: 100, etaRange: '-', riskLevel: 'MEDIUM', status: 'DEPARTED', platform: 2, historicalAvgHaltMins: 1 },
       { stationCode: 'OKA', stationName: 'Okhla', distanceKm: 48, latitude: 28.5600, longitude: 77.2800, scheduledArrival: '10:04 (Day 1)', scheduledDeparture: '10:05', predictedArrival: '10:12', predictedDeparture: '10:13', predictedDelayMinutes: 8, confidenceScore: 98, etaRange: '10:10 - 10:15', riskLevel: 'HIGH', status: 'CURRENT', platform: 3, historicalAvgHaltMins: 1 },
       { stationCode: 'NZM', stationName: 'Hazrat Nizamuddin', distanceKm: 52, latitude: 28.5888, longitude: 77.2534, scheduledArrival: '10:15 (Day 1)', scheduledDeparture: '10:17', predictedArrival: '10:25', predictedDeparture: '10:27', predictedDelayMinutes: 10, confidenceScore: 90, etaRange: '10:23 - 10:30', riskLevel: 'HIGH', status: 'NEXT', platform: 1, historicalAvgHaltMins: 2 },
       { stationCode: 'NDLS', stationName: 'New Delhi', distanceKm: 58, latitude: 28.6415, longitude: 77.2189, scheduledArrival: '10:35 (Day 1)', scheduledDeparture: '10:35', predictedArrival: '10:45', predictedDeparture: '10:45', predictedDelayMinutes: 10, confidenceScore: 85, etaRange: '10:42 - 10:50', riskLevel: 'HIGH', status: 'UPCOMING', platform: 4, historicalAvgHaltMins: 0 }

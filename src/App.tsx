@@ -62,7 +62,9 @@ export function App() {
 
   // Application Data State
   const [trains, setTrains] = useState<TrainData[]>(MOCK_TRAINS);
-  const [selectedTrain, setSelectedTrain] = useState<TrainData>(MOCK_TRAINS[0]);
+  const [selectedTrain, setSelectedTrain] = useState<TrainData>(() => {
+    return MOCK_TRAINS[Math.floor(Math.random() * MOCK_TRAINS.length)];
+  });
   const [activeTab, setActiveTab] = useState<NavigationTab>(() => {
     return currentUser?.role === 'PASSENGER' ? 'passenger-view' : 'dashboard';
   });
