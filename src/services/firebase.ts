@@ -13,6 +13,7 @@ import {
 } from 'firebase/auth';
 import { 
   getFirestore, 
+  initializeFirestore,
   doc, 
   setDoc, 
   getDoc, 
@@ -24,8 +25,7 @@ import {
   orderBy, 
   limit,
   serverTimestamp,
-  Firestore,
-  getDocFromServer
+  Firestore
 } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
 import { AuthUser, UserRole, UserActivity, ActivityType } from '../types';
@@ -48,10 +48,25 @@ if (typeof window !== 'undefined') {
 // Initialize Firebase Auth
 export const auth = getAuth(app);
 
-// Initialize Firestore
-export const db: Firestore = (firebaseConfig as any).firestoreDatabaseId 
-  ? getFirestore(app, (firebaseConfig as any).firestoreDatabaseId)
-  : getFirestore(app);
+// Initialize Firestore with long-polling resilience for browser/iframe environments
+function initFirestore(): Firestore {
+  const dbId = (firebaseConfig as any).firestoreDatabaseId;
+  const targetDb = dbId && dbId !== '(default)' ? dbId : undefined;
+  try {
+    return initializeFirestore(app, {
+      experimentalForceLongPolling: true,
+      experimentalAutoDetectLongPolling: true,
+    } as any, targetDb);
+  } catch {
+    try {
+      return targetDb ? getFirestore(app, targetDb) : getFirestore(app);
+    } catch {
+      return getFirestore(app);
+    }
+  }
+}
+
+export const db: Firestore = initFirestore();
 
 // Google Auth Provider with Google Docs & Drive Workspace Scopes
 export const GOOGLE_WORKSPACE_SCOPES = [
@@ -127,15 +142,18 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
 
 // Test initial connection
 export async function testFirestoreConnection(): Promise<void> {
+  if (typeof window === 'undefined') return;
   try {
-    await getDocFromServer(doc(db, 'test', 'connection'));
+    await getDoc(doc(db, 'test', 'connection'));
   } catch (error) {
     if (error instanceof Error && error.message.includes('the client is offline')) {
-      console.warn('Firebase network is currently offline or unreachable.');
+      console.info('Firebase operates in offline-cached mode while connecting.');
     }
   }
 }
-testFirestoreConnection();
+setTimeout(() => {
+  testFirestoreConnection();
+}, 2000);
 
 export interface FirestoreUserAlert {
   id?: string;
