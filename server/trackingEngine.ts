@@ -1,4 +1,5 @@
 import { ALL_RUNNING_INDIAN_TRAINS, INDIAN_STATIONS } from '../src/data/allIndianTrains';
+import { INITIAL_TRAINS } from '../src/data/mockTrains';
 import { TrainData, StationStop, RiskLevel } from '../src/types';
 
 export interface GpsCoordinate {
@@ -186,7 +187,7 @@ export function getLiveTrainStatus(
   }
 ): LiveTrackingTelemetry | null {
   const cleanNumber = trainNumber.trim();
-  const train = ALL_RUNNING_INDIAN_TRAINS.find(
+  const train = INITIAL_TRAINS.find(
     (t) => t.trainNumber === cleanNumber || t.id.includes(cleanNumber)
   );
 

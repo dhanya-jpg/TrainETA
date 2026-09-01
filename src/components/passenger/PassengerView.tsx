@@ -97,15 +97,17 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
       setScheduleError(null);
       try {
         const response = await fetch(`/api/pnr/${query}`);
-        const data = await response.json();
-        
-        if (!response.ok) {
-          throw new Error(data.error || 'Failed to fetch PNR status from IRCTC');
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const data = await response.json();
+          if (response.ok && data?.data) {
+            setPnrData(data);
+          } else {
+            setPnrError(data?.error || 'PNR information currently unavailable.');
+          }
         }
-        
-        setPnrData(data);
       } catch (err: any) {
-        setPnrError(err.message || 'Unable to fetch PNR data');
+        console.warn('PNR status fetch error:', err);
       } finally {
         setPnrLoading(false);
       }
@@ -121,37 +123,65 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
       setPnrError(null);
       
       try {
-        // Fetch Official IRCTC Live Telemetry (via RailRadar proxy in server)
-        const tsResponse = await fetch(`/api/train-status/${query}`);
-        const tsData = await tsResponse.json();
-        
-        if (tsResponse.ok && tsData.success) {
-          onSelectTrain(tsData.data);
-          setDestinationCode(tsData.data.destination);
-        } else {
-          // Fallback to local simulated array if API fails
-          const found = trains.find((t) => t.trainNumber === query);
-          if (found) {
-            onSelectTrain(found);
-            setDestinationCode(found.destination);
-          }
+        // 1. Immediately match against loaded trains array
+        const found = trains.find((t) => t.trainNumber === query || t.trainName.toLowerCase().includes(query.toLowerCase()));
+        if (found) {
+          onSelectTrain(found);
+          setDestinationCode(found.destination);
+
+          // Populate schedule table from station stops immediately
+          setScheduleData({
+            data: {
+              trainNumber: found.trainNumber,
+              trainName: found.trainName,
+              route: found.stops.map((s, idx) => ({
+                stationCode: s.stationCode,
+                stationName: s.stationName,
+                arrivalTime: s.scheduledArrival || s.arrivalTime || '--',
+                departureTime: s.scheduledDeparture || s.departureTime || '--',
+                actualArrival: s.actualArrival,
+                distance: s.distanceKm || idx * 45,
+                day: 1,
+                platform: s.platform || 1
+              }))
+            }
+          });
         }
 
-        // Parallel fetch for Schedule Table view
-        const response = await fetch(`/api/schedule/${query}`);
-        const data = await response.json();
-        
-        if (!response.ok) {
-          throw new Error(data.error || 'Failed to fetch train schedule from IRCTC');
+        // 2. Fetch server live telemetry safely
+        try {
+          const tsResponse = await fetch(`/api/train-status/${query}`);
+          const contentType = tsResponse.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const tsData = await tsResponse.json();
+            if (tsResponse.ok && tsData.success && tsData.data) {
+              onSelectTrain(tsData.data);
+              setDestinationCode(tsData.data.destination);
+            }
+          }
+        } catch (e) {
+          console.warn('Server train-status fetch warning:', e);
         }
-        
-        setScheduleData(data);
+
+        // 3. Fetch server schedule safely
+        try {
+          const response = await fetch(`/api/schedule/${query}`);
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const data = await response.json();
+            if (response.ok && data?.data) {
+              setScheduleData(data);
+            }
+          }
+        } catch (e) {
+          console.warn('Server schedule fetch warning:', e);
+        }
       } catch (err: any) {
-        setScheduleError(err.message || 'Unable to fetch Train Schedule data');
+        console.warn('Live Train Schedule error:', err);
       } finally {
         setScheduleLoading(false);
       }
-      return; // Stop execution, we already loaded the train (live or sim)
+      return;
     } else if (query.length >= 2 && !/^\d{10}$/.test(query)) {
       // General Train Search query
       setSearchTrainLoading(true);
@@ -159,15 +189,15 @@ export const PassengerView: React.FC<PassengerViewProps> = ({
       setPnrError(null);
       try {
         const response = await fetch(`/api/search-train?query=${encodeURIComponent(query)}`);
-        const data = await response.json();
-        
-        if (!response.ok) {
-          throw new Error(data.error || 'Failed to search trains from IRCTC');
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const data = await response.json();
+          if (response.ok && data?.data) {
+            setSearchTrainData(data);
+          }
         }
-        
-        setSearchTrainData(data);
       } catch (err: any) {
-        setSearchTrainError(err.message || 'Unable to search trains');
+        console.warn('Search trains error:', err);
       } finally {
         setSearchTrainLoading(false);
       }

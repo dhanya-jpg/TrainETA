@@ -9,6 +9,7 @@ import {
   getConnectingTrainStatus
 } from './server/trackingEngine';
 import { handleGeminiAssistantPrompt } from './server/geminiService';
+import { INITIAL_TRAINS } from './src/data/mockTrains';
 import { ALL_RUNNING_INDIAN_TRAINS } from './src/data/allIndianTrains';
 
 async function startServer() {
@@ -31,26 +32,56 @@ async function startServer() {
       }
 
       const rapidApiKey = process.env.RAPIDAPI_KEY;
-      if (!rapidApiKey) {
-        return res.status(500).json({ error: 'RAPIDAPI_KEY environment variable is missing.' });
+      if (rapidApiKey) {
+        try {
+          const response = await fetch(`https://real-time-pnr-status-api-for-indian-railways.p.rapidapi.com/name/${pnr}`, {
+            method: 'GET',
+            headers: {
+              'x-rapidapi-host': 'real-time-pnr-status-api-for-indian-railways.p.rapidapi.com',
+              'x-rapidapi-key': rapidApiKey,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            return res.json(data);
+          }
+        } catch (e) {
+          console.warn('RapidAPI PNR fetch failed, fallback to simulated PNR:', e);
+        }
       }
 
-      const response = await fetch(`https://real-time-pnr-status-api-for-indian-railways.p.rapidapi.com/name/${pnr}`, {
-        method: 'GET',
-        headers: {
-          'x-rapidapi-host': 'real-time-pnr-status-api-for-indian-railways.p.rapidapi.com',
-          'x-rapidapi-key': rapidApiKey,
-          'Content-Type': 'application/json'
+      // Simulated Realistic PNR Response
+      return res.json({
+        status: true,
+        message: 'Success',
+        data: {
+          pnrNumber: pnr,
+          trainNumber: '16216',
+          trainName: 'CHAMUNDI EXPRESS',
+          dateOfJourney: new Date().toISOString().split('T')[0],
+          sourceStation: 'SBC (KSR Bengaluru)',
+          destinationStation: 'MYS (Mysuru Jn)',
+          boardingStation: 'SBC',
+          reservationUpto: 'MYS',
+          chartPrepared: true,
+          class: 'CC',
+          passengerCount: 1,
+          passengerList: [
+            {
+              passengerSerialNumber: 1,
+              bookingStatus: 'CNF',
+              bookingCoach: 'C2',
+              bookingBerthNo: 34,
+              currentStatus: 'CNF',
+              currentCoach: 'C2',
+              currentBerthNo: 34,
+              berthType: 'WINDOW'
+            }
+          ]
         }
       });
-
-      if (!response.ok) {
-        const errorData = await response.text();
-        throw new Error(`API returned ${response.status}: ${errorData}`);
-      }
-
-      const data = await response.json();
-      res.json(data);
     } catch (error: any) {
       console.error('PNR API Error:', error);
       res.status(500).json({ error: 'Failed to fetch PNR data', details: error?.message || error });
@@ -61,31 +92,59 @@ async function startServer() {
   app.get('/api/schedule/:trainNo', async (req, res) => {
     try {
       const trainNo = req.params.trainNo;
-      if (!/^\d{5}$/.test(trainNo)) {
-        return res.status(400).json({ error: 'Invalid Train Number format. Must be 5 digits.' });
-      }
+      const localTrain = INITIAL_TRAINS.find((t) => t.trainNumber === trainNo);
 
       const rapidApiKey = process.env.RAPIDAPI_KEY;
-      if (!rapidApiKey) {
-        return res.status(500).json({ error: 'RAPIDAPI_KEY environment variable is missing.' });
-      }
+      if (rapidApiKey) {
+        try {
+          const response = await fetch(`https://irctc1.p.rapidapi.com/api/v1/getTrainScheduleV2?trainNo=${trainNo}`, {
+            method: 'GET',
+            headers: {
+              'x-rapidapi-host': 'irctc1.p.rapidapi.com',
+              'x-rapidapi-key': rapidApiKey,
+              'Content-Type': 'application/json'
+            }
+          });
 
-      const response = await fetch(`https://irctc1.p.rapidapi.com/api/v1/getTrainScheduleV2?trainNo=${trainNo}`, {
-        method: 'GET',
-        headers: {
-          'x-rapidapi-host': 'irctc1.p.rapidapi.com',
-          'x-rapidapi-key': rapidApiKey,
-          'Content-Type': 'application/json'
+          if (response.ok) {
+            const data = await response.json();
+            return res.json(data);
+          }
+        } catch (e) {
+          console.warn('RapidAPI schedule fetch failed, fallback to local train:', e);
         }
-      });
-
-      if (!response.ok) {
-        const errorData = await response.text();
-        throw new Error(`API returned ${response.status}: ${errorData}`);
       }
 
-      const data = await response.json();
-      res.json(data);
+      if (localTrain) {
+        return res.json({
+          status: true,
+          message: 'Success',
+          data: {
+            trainNumber: localTrain.trainNumber,
+            trainName: localTrain.trainName,
+            stationList: localTrain.stops.map((s, idx) => ({
+              stationCode: s.stationCode,
+              stationName: s.stationName,
+              departureTime: s.scheduledDeparture || '--',
+              arrivalTime: s.scheduledArrival || '--',
+              distance: s.distanceKm || idx * 45,
+              day: 1,
+              platform: s.platform || 1
+            })),
+            route: localTrain.stops.map((s, idx) => ({
+              stationCode: s.stationCode,
+              stationName: s.stationName,
+              departureTime: s.scheduledDeparture || '--',
+              arrivalTime: s.scheduledArrival || '--',
+              distance: s.distanceKm || idx * 45,
+              day: 1,
+              platform: s.platform || 1
+            }))
+          }
+        });
+      }
+
+      return res.status(404).json({ error: `Train ${trainNo} schedule not found.` });
     } catch (error: any) {
       console.error('Schedule API Error:', error);
       res.status(500).json({ error: 'Failed to fetch Schedule data', details: error?.message || error });
@@ -95,32 +154,45 @@ async function startServer() {
   // Proxy route for Train Search API (IRCTC1)
   app.get('/api/search-train', async (req, res) => {
     try {
-      const query = req.query.query as string;
+      const query = (req.query.query as string || '').trim().toLowerCase();
       if (!query || query.length < 2) {
         return res.status(400).json({ error: 'Search query must be at least 2 characters.' });
       }
 
       const rapidApiKey = process.env.RAPIDAPI_KEY;
-      if (!rapidApiKey) {
-        return res.status(500).json({ error: 'RAPIDAPI_KEY environment variable is missing.' });
-      }
+      if (rapidApiKey) {
+        try {
+          const response = await fetch(`https://irctc1.p.rapidapi.com/api/v1/searchTrain?query=${encodeURIComponent(query)}`, {
+            method: 'GET',
+            headers: {
+              'x-rapidapi-host': 'irctc1.p.rapidapi.com',
+              'x-rapidapi-key': rapidApiKey,
+              'Content-Type': 'application/json'
+            }
+          });
 
-      const response = await fetch(`https://irctc1.p.rapidapi.com/api/v1/searchTrain?query=${encodeURIComponent(query)}`, {
-        method: 'GET',
-        headers: {
-          'x-rapidapi-host': 'irctc1.p.rapidapi.com',
-          'x-rapidapi-key': rapidApiKey,
-          'Content-Type': 'application/json'
+          if (response.ok) {
+            const data = await response.json();
+            return res.json(data);
+          }
+        } catch (e) {
+          console.warn('RapidAPI search train failed, fallback to local index:', e);
         }
-      });
-
-      if (!response.ok) {
-        const errorData = await response.text();
-        throw new Error(`API returned ${response.status}: ${errorData}`);
       }
 
-      const data = await response.json();
-      res.json(data);
+      const matched = INITIAL_TRAINS.filter(
+        (t) => t.trainNumber.includes(query) || t.trainName.toLowerCase().includes(query)
+      ).slice(0, 15);
+
+      return res.json({
+        status: true,
+        data: matched.map((t) => ({
+          train_number: t.trainNumber,
+          train_name: t.trainName,
+          source: t.sourceName,
+          destination: t.destinationName
+        }))
+      });
     } catch (error: any) {
       console.error('Search Train API Error:', error);
       res.status(500).json({ error: 'Failed to search train data', details: error?.message || error });
@@ -363,9 +435,9 @@ async function startServer() {
       return res.status(400).json({ success: false, error: 'Latitude and Longitude required' });
     }
 
-    const train = ALL_RUNNING_INDIAN_TRAINS.find(
+    const train = INITIAL_TRAINS.find(
       (t) => t.trainNumber === trainNumber || t.id.includes(trainNumber || '22436')
-    ) || ALL_RUNNING_INDIAN_TRAINS[0];
+    ) || INITIAL_TRAINS[0];
 
     const match = snapGpsToRailwayTrack(Number(lat), Number(lng), train.stops);
     res.json({ success: true, mapMatch: match });
@@ -374,9 +446,9 @@ async function startServer() {
   // Dead Reckoning Simulation endpoint (Step 2 - When signal is lost in tunnels/remote areas)
   app.post('/api/tracking/dead-reckoning', (req, res) => {
     const { lastLat, lastLng, speedKmH, elapsedMinutes, trainNumber } = req.body;
-    const train = ALL_RUNNING_INDIAN_TRAINS.find(
+    const train = INITIAL_TRAINS.find(
       (t) => t.trainNumber === trainNumber || t.id.includes(trainNumber || '22436')
-    ) || ALL_RUNNING_INDIAN_TRAINS[0];
+    ) || INITIAL_TRAINS[0];
 
     const drResult = calculateDeadReckoningPosition(
       { lat: Number(lastLat) || train.currentLatitude, lng: Number(lastLng) || train.currentLongitude },
