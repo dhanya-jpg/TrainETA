@@ -1,47 +1,24 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { motion } from 'motion/react';
-import { Train, MapPin, Share2, Compass, Radio, FileText, ExternalLink, Check } from 'lucide-react';
+import { Train, MapPin, Share2, Compass, Radio } from 'lucide-react';
 import { TrainData } from '../../types';
-import { exportTrainDossierToGoogleDocs } from '../../services/googleDocsService';
 
 interface SelectedTrainBannerProps {
   train: TrainData | null;
   onOpenMap?: () => void;
   onOpenXAI?: () => void;
   onOpenSimulation?: () => void;
-  onOpenDocs?: () => void;
 }
 
 export const SelectedTrainBanner: React.FC<SelectedTrainBannerProps> = ({
   train,
   onOpenMap,
   onOpenXAI,
-  onOpenSimulation,
-  onOpenDocs
+  onOpenSimulation
 }) => {
-  const [isExporting, setIsExporting] = useState<boolean>(false);
-  const [exportedUrl, setExportedUrl] = useState<string | null>(null);
-
   if (!train) return null;
 
   const isDelayed = train.currentDelayMinutes > 0;
-
-  const handleQuickExportDocs = async () => {
-    setIsExporting(true);
-    try {
-      const res = await exportTrainDossierToGoogleDocs(train);
-      if (res.success && res.documentUrl) {
-        setExportedUrl(res.documentUrl);
-        window.open(res.documentUrl, '_blank');
-      } else {
-        alert(res.error || 'Please connect your Google Account in the Google Docs tab.');
-      }
-    } catch (err: any) {
-      alert(err.message || 'Failed to export to Google Docs.');
-    } finally {
-      setIsExporting(false);
-    }
-  };
 
   return (
     <motion.div 
@@ -76,15 +53,6 @@ export const SelectedTrainBanner: React.FC<SelectedTrainBannerProps> = ({
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-          <button
-            onClick={handleQuickExportDocs}
-            disabled={isExporting}
-            title="Export train telemetry & ML ETA dossier to Google Docs"
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs uppercase tracking-wider px-4 py-3 rounded-xl transition-all flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
-          >
-            <FileText className="w-4 h-4" />
-            <span>{isExporting ? 'Creating Doc...' : 'Export to Google Docs'}</span>
-          </button>
           {onOpenSimulation && (
             <button
               onClick={onOpenSimulation}

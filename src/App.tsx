@@ -15,7 +15,6 @@ import { TrainSearchView } from './components/search/TrainSearchView';
 import { AnalyticsView } from './components/analytics/AnalyticsView';
 import { AlertsView } from './components/alerts/AlertsView';
 import { ReportsView } from './components/reports/ReportsView';
-import { GoogleDocsManager } from './components/docs/GoogleDocsManager';
 import { AITrainCopilot } from './components/ai/AITrainCopilot';
 import { LandingModal } from './components/landing/LandingModal';
 import { LoginPage } from './components/auth/LoginPage';
@@ -585,16 +584,6 @@ export function App() {
               {/* TAB: Analytics & Benchmarks (Operator) */}
               {activeTab === 'analytics' && userRole === 'OPERATOR' && (
                 <AnalyticsView analytics={analytics} />
-              )}
-
-              {/* TAB: Google Docs Workspace Hub */}
-              {activeTab === 'google-docs' && (
-                <GoogleDocsManager
-                  trains={trains}
-                  selectedTrain={selectedTrain}
-                  currentUser={currentUser}
-                  onSelectTrain={handleSelectTrain}
-                />
               )}
 
               {/* TAB: Reports & Architecture (Operator) */}

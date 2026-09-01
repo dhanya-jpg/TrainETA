@@ -11,13 +11,10 @@ import {
   Zap, 
   Clock, 
   Gauge, 
-  TrafficCone,
-  FileText,
-  ExternalLink
+  TrafficCone
 } from 'lucide-react';
 import { TrainData, WhatIfParameters, WhatIfResult } from '../../types';
 import { runWhatIfSimulation } from '../../services/etaPredictionService';
-import { exportWhatIfSimulationToGoogleDocs } from '../../services/googleDocsService';
 
 interface WhatIfSimulationViewProps {
   train: TrainData;
@@ -45,23 +42,6 @@ export const WhatIfSimulationView: React.FC<WhatIfSimulationViewProps> = ({ trai
   );
 
   const [hasRun, setHasRun] = useState<boolean>(true);
-  const [isExportingDocs, setIsExportingDocs] = useState<boolean>(false);
-
-  const handleExportSimulationToDocs = async () => {
-    setIsExportingDocs(true);
-    try {
-      const res = await exportWhatIfSimulationToGoogleDocs(simulationResult, train, params);
-      if (res.success && res.documentUrl) {
-        window.open(res.documentUrl, '_blank');
-      } else {
-        alert(res.error || 'Please connect your Google Account in the Google Docs tab.');
-      }
-    } catch (err: any) {
-      alert(err.message || 'Failed to export simulation to Google Docs.');
-    } finally {
-      setIsExportingDocs(false);
-    }
-  };
 
   const handleRunSimulation = () => {
     const result = runWhatIfSimulation(train, params);
@@ -286,20 +266,9 @@ export const WhatIfSimulationView: React.FC<WhatIfSimulationViewProps> = ({ trai
               <span className="text-xs font-bold text-ink uppercase tracking-wider font-mono-code">
                 Simulated vs Baseline Outcome
               </span>
-              <div className="flex items-center gap-3">
-                <span className="text-[11px] font-bold text-ink/60 font-mono-code">
-                  Destination: {simulationResult.destinationStation}
-                </span>
-                <button
-                  onClick={handleExportSimulationToDocs}
-                  disabled={isExportingDocs}
-                  className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer disabled:opacity-50"
-                  title="Export this simulation outcome directly to Google Docs"
-                >
-                  <FileText className="w-3.5 h-3.5" />
-                  <span>{isExportingDocs ? 'Exporting...' : 'Export to Docs'}</span>
-                </button>
-              </div>
+              <span className="text-[11px] font-bold text-ink/60 font-mono-code">
+                Destination: {simulationResult.destinationStation}
+              </span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

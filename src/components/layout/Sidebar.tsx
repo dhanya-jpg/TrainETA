@@ -33,7 +33,6 @@ export type NavigationTab =
   | 'what-if'
   | 'delay-propagation'
   | 'railway-control'
-  | 'google-docs'
   | 'alerts'
   | 'analytics'
   | 'reports'
@@ -60,7 +59,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const operatorNavItems: { id: NavigationTab; label: string; icon: React.ComponentType<{ className?: string }>; badge?: string | number }[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'google-docs', label: 'Google Docs Hub', icon: FileText, badge: 'Docs' },
     { id: 'ai-copilot', label: 'AI Copilot', icon: BrainCircuit, badge: 'Live AI' },
     { id: 'live-map', label: 'Live Tracking', icon: Map },
     { id: 'search', label: 'Train Search', icon: Search },
@@ -77,7 +75,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const passengerNavItems: { id: NavigationTab; label: string; icon: React.ComponentType<{ className?: string }>; badge?: string | number }[] = [
     { id: 'passenger-view', label: 'Passenger Portal', icon: UserCheck },
-    { id: 'google-docs', label: 'Google Docs Reports', icon: FileText, badge: 'Docs' },
     { id: 'ai-copilot', label: 'AI Train Assistant', icon: BrainCircuit, badge: 'AI' },
     { id: 'live-map', label: 'Live Map', icon: Map },
     { id: 'search', label: 'Train Search', icon: Search },
