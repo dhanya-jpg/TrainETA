@@ -1,7 +1,13 @@
-import React, { useEffect, useRef, useState } from 'react';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-import { TrainData } from '../../types';
+﻿import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import { 
+  APIProvider, 
+  Map as GoogleMap, 
+  AdvancedMarker,
+  InfoWindow, 
+  useMap,
+  useMapsLibrary
+} from '@vis.gl/react-google-maps';
+import { TrainData, StationStop } from '../../types';
 import { 
   Gauge, 
   Clock, 
@@ -11,35 +17,99 @@ import {
   Crosshair,
   Train as TrainIcon,
   Plus,
-  Minus
+  Minus,
+  Layers,
+  Sparkles
 } from 'lucide-react';
 import { calculateBearing } from '../../services/trainSimulationEngine';
+
+export const GOOGLE_MAPS_API_KEY = 
+  import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 
+  'AIzaSyDttKZIN4OAdZDUkEJMad_LGYVZ3Vj6ag0';
 
 interface LiveTrainMapProps {
   train: TrainData;
   onSelectStation?: (stationCode: string) => void;
 }
 
-export const LiveTrainMap: React.FC<LiveTrainMapProps> = ({ train, onSelectStation }) => {
-  const mapContainerRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<L.Map | null>(null);
-  const tileLayerRef = useRef<L.TileLayer | null>(null);
+// Custom dark map styling for Indian Railways operations
+const DARK_MAP_STYLES = [
+  { elementType: 'geometry', stylers: [{ color: '#0f172a' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#0f172a' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#94a3b8' }] },
+  {
+    featureType: 'administrative.locality',
+    elementType: 'labels.text.fill',
+    stylers: [{ color: '#cbd5e1' }]
+  },
+  {
+    featureType: 'poi',
+    elementType: 'labels.text.fill',
+    stylers: [{ color: '#64748b' }]
+  },
+  {
+    featureType: 'poi.park',
+    elementType: 'geometry',
+    stylers: [{ color: '#14291f' }]
+  },
+  {
+    featureType: 'road',
+    elementType: 'geometry',
+    stylers: [{ color: '#1e293b' }]
+  },
+  {
+    featureType: 'road',
+    elementType: 'geometry.stroke',
+    stylers: [{ color: '#0f172a' }]
+  },
+  {
+    featureType: 'road',
+    elementType: 'labels.text.fill',
+    stylers: [{ color: '#64748b' }]
+  },
+  {
+    featureType: 'transit.line',
+    elementType: 'geometry',
+    stylers: [{ color: '#334155' }]
+  },
+  {
+    featureType: 'transit.station',
+    elementType: 'labels.text.fill',
+    stylers: [{ color: '#38bdf8' }]
+  },
+  {
+    featureType: 'water',
+    elementType: 'geometry',
+    stylers: [{ color: '#0284c7' }]
+  },
+  {
+    featureType: 'water',
+    elementType: 'labels.text.fill',
+    stylers: [{ color: '#38bdf8' }]
+  }
+];
 
-  // Layers and Markers Refs
-  const trackBedLayerRef = useRef<L.Polyline | null>(null);
-  const passedLayerRef = useRef<L.Polyline | null>(null);
-  const upcomingLayerRef = useRef<L.Polyline | null>(null);
-  const stationMarkersGroupRef = useRef<L.LayerGroup | null>(null);
-  const trainMarkerRef = useRef<L.Marker | null>(null);
-  const userMarkerRef = useRef<L.Marker | null>(null);
-  const userAccuracyCircleRef = useRef<L.Circle | null>(null);
+// Inner component to handle Google Maps Polylines, Markers, and Camera Controls
+const GoogleMapsOverlay: React.FC<{
+  train: TrainData;
+  onSelectStation?: (stationCode: string) => void;
+  isFollowTrain: boolean;
+  setIsFollowTrain: (follow: boolean) => void;
+  userLocation: { lat: number; lng: number; accuracy: number } | null;
+  mapType: 'roadmap' | 'satellite' | 'hybrid' | 'terrain';
+}> = ({ train, onSelectStation, isFollowTrain, setIsFollowTrain, userLocation, mapType }) => {
+  const map = useMap();
+  const mapsLibrary = useMapsLibrary('maps');
 
-  const [isFollowTrain, setIsFollowTrain] = useState<boolean>(true);
-  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number; accuracy: number } | null>(null);
-  const [isLocating, setIsLocating] = useState(false);
-  const prevTrainIdRef = useRef<string>(train.id);
+  const [selectedStation, setSelectedStation] = useState<StationStop | null>(null);
 
-  // Calculate current bearing angle
+  // Polylines references
+  const trackBedPolylineRef = useRef<google.maps.Polyline | null>(null);
+  const passedPolylineRef = useRef<google.maps.Polyline | null>(null);
+  const upcomingPolylineRef = useRef<google.maps.Polyline | null>(null);
+  const userAccuracyCircleRef = useRef<google.maps.Circle | null>(null);
+
+  // Calculate bearing angle for train rotation
   const currentIdx = Math.max(0, Math.min(train.stops.length - 1, train.currentStationIndex));
   const nextIdx = Math.min(train.stops.length - 1, currentIdx + 1);
   const targetStop = train.stops[nextIdx];
@@ -47,446 +117,280 @@ export const LiveTrainMap: React.FC<LiveTrainMapProps> = ({ train, onSelectStati
     ? calculateBearing(train.currentLatitude, train.currentLongitude, targetStop.latitude, targetStop.longitude)
     : 0;
 
-  // Initialize Leaflet Map
+  // Manage Google Maps Polylines
   useEffect(() => {
-    if (!mapContainerRef.current || mapInstanceRef.current) return;
+    if (!map || !mapsLibrary) return;
 
-    const isDark = document.documentElement.classList.contains('dark');
-    
-    // Choose high performance crisp CartoDB tiles
-    const tileUrl = isDark
-      ? 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
-      : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
-
-    const map = L.map(mapContainerRef.current, {
-      center: [train.currentLatitude, train.currentLongitude],
-      zoom: 7,
-      zoomControl: false,
-      attributionControl: false,
-      maxZoom: 18,
-      minZoom: 4,
-    });
-
-    const tileLayer = L.tileLayer(tileUrl, {
-      maxZoom: 19,
-      subdomains: 'abcd',
-    }).addTo(map);
-
-    tileLayerRef.current = tileLayer;
-
-    // Polylines layers
-    const trackBed = L.polyline([], {
-      color: '#1E293B',
-      weight: 6,
-      opacity: 0.8,
-      lineCap: 'round',
-      lineJoin: 'round',
-    }).addTo(map);
-
-    const passed = L.polyline([], {
-      color: '#10B981',
-      weight: 4,
-      dashArray: '4, 8',
-      opacity: 0.95,
-      lineCap: 'round',
-    }).addTo(map);
-
-    const upcoming = L.polyline([], {
-      color: '#2563EB',
-      weight: 4,
-      opacity: 0.95,
-      lineCap: 'round',
-    }).addTo(map);
-
-    const stationMarkersGroup = L.layerGroup().addTo(map);
-
-    trackBedLayerRef.current = trackBed;
-    passedLayerRef.current = passed;
-    upcomingLayerRef.current = upcoming;
-    stationMarkersGroupRef.current = stationMarkersGroup;
-    mapInstanceRef.current = map;
-
-    // Handle container resize
-    const resizeObserver = new ResizeObserver(() => {
-      map.invalidateSize();
-    });
-    if (mapContainerRef.current) {
-      resizeObserver.observe(mapContainerRef.current);
+    // 1. Full Track Bed Polyline
+    if (!trackBedPolylineRef.current) {
+      trackBedPolylineRef.current = new mapsLibrary.Polyline({
+        map,
+        strokeColor: '#334155',
+        strokeWeight: 6,
+        strokeOpacity: 0.8
+      });
     }
 
-    return () => {
-      resizeObserver.disconnect();
-      map.remove();
-      mapInstanceRef.current = null;
-    };
-  }, []);
+    // 2. Passed Track Segment Polyline (Green)
+    if (!passedPolylineRef.current) {
+      passedPolylineRef.current = new mapsLibrary.Polyline({
+        map,
+        strokeColor: '#10B981',
+        strokeWeight: 4,
+        strokeOpacity: 0.95
+      });
+    }
 
-  // Update Tile Layer if dark mode class changes
-  useEffect(() => {
-    const observer = new MutationObserver(() => {
-      if (!mapInstanceRef.current) return;
-      const isDark = document.documentElement.classList.contains('dark');
-      const newUrl = isDark
-        ? 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
-        : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
-      
-      if (tileLayerRef.current) {
-        tileLayerRef.current.setUrl(newUrl);
-      }
+    // 3. Upcoming Track Segment Polyline (Blue or Amber)
+    if (!upcomingPolylineRef.current) {
+      upcomingPolylineRef.current = new mapsLibrary.Polyline({
+        map,
+        strokeColor: train.currentDelayMinutes > 15 ? '#F59E0B' : '#2563EB',
+        strokeWeight: 4,
+        strokeOpacity: 0.95
+      });
+    }
+
+    const allCoords = train.stops.map(s => ({ lat: s.latitude, lng: s.longitude }));
+    trackBedPolylineRef.current.setPath(allCoords);
+
+    const passedCoords = [
+      ...train.stops.slice(0, currentIdx + 1).map(s => ({ lat: s.latitude, lng: s.longitude })),
+      { lat: train.currentLatitude, lng: train.currentLongitude }
+    ];
+    passedPolylineRef.current.setPath(passedCoords);
+
+    const upcomingCoords = [
+      { lat: train.currentLatitude, lng: train.currentLongitude },
+      ...train.stops.slice(currentIdx + 1).map(s => ({ lat: s.latitude, lng: s.longitude }))
+    ];
+    upcomingPolylineRef.current.setPath(upcomingCoords);
+    upcomingPolylineRef.current.setOptions({
+      strokeColor: train.currentDelayMinutes > 15 ? '#F59E0B' : '#2563EB'
     });
 
+    return () => {
+      trackBedPolylineRef.current?.setMap(null);
+      passedPolylineRef.current?.setMap(null);
+      upcomingPolylineRef.current?.setMap(null);
+      trackBedPolylineRef.current = null;
+      passedPolylineRef.current = null;
+      upcomingPolylineRef.current = null;
+    };
+  }, [map, mapsLibrary, train, currentIdx]);
+
+  // Update user accuracy circle
+  useEffect(() => {
+    if (!map || !mapsLibrary || !userLocation) {
+      userAccuracyCircleRef.current?.setMap(null);
+      return;
+    }
+
+    if (!userAccuracyCircleRef.current) {
+      userAccuracyCircleRef.current = new mapsLibrary.Circle({
+        map,
+        center: { lat: userLocation.lat, lng: userLocation.lng },
+        radius: Math.min(500, userLocation.accuracy),
+        fillColor: '#3B82F6',
+        fillOpacity: 0.15,
+        strokeColor: '#3B82F6',
+        strokeWeight: 1
+      });
+    } else {
+      userAccuracyCircleRef.current.setCenter({ lat: userLocation.lat, lng: userLocation.lng });
+      userAccuracyCircleRef.current.setRadius(Math.min(500, userLocation.accuracy));
+      userAccuracyCircleRef.current.setMap(map);
+    }
+  }, [map, mapsLibrary, userLocation]);
+
+  // Camera pan to train when following
+  useEffect(() => {
+    if (!map || !isFollowTrain) return;
+    map.panTo({ lat: train.currentLatitude, lng: train.currentLongitude });
+  }, [map, isFollowTrain, train.currentLatitude, train.currentLongitude]);
+
+  return (
+    <>
+      {/* Station Markers */}
+      {train.stops.map((stop, index) => {
+        const isOrigin = index === 0;
+        const isDestination = index === train.stops.length - 1;
+        const isCurrent = stop.status === 'CURRENT';
+        const isNext = stop.status === 'NEXT';
+
+        let badgeLabel = `${index + 1}`;
+        let bgClass = 'bg-slate-700 text-white border-slate-900';
+        let sizeClass = 'w-7 h-7 text-[11px]';
+
+        if (isOrigin) {
+          badgeLabel = 'SRC';
+          bgClass = 'bg-emerald-600 text-white border-emerald-900 shadow-lg shadow-emerald-600/40';
+          sizeClass = 'w-8 h-8 text-[10px] font-bold';
+        } else if (isDestination) {
+          badgeLabel = 'DEST';
+          bgClass = 'bg-blue-600 text-white border-blue-900 shadow-lg shadow-blue-600/40';
+          sizeClass = 'w-8 h-8 text-[10px] font-bold';
+        } else if (isCurrent) {
+          bgClass = 'bg-blue-600 text-white border-blue-400 ring-4 ring-blue-400/40';
+        } else if (isNext) {
+          bgClass = stop.riskLevel === 'HIGH'
+            ? 'bg-rose-600 text-white border-rose-300 ring-4 ring-rose-500/40'
+            : 'bg-amber-500 text-white border-amber-300 ring-4 ring-amber-400/40';
+        } else if (stop.status === 'DEPARTED') {
+          bgClass = 'bg-emerald-600/80 text-white border-emerald-700';
+        }
+
+        return (
+          <AdvancedMarker
+            key={`station-${stop.stationCode}-${index}`}
+            position={{ lat: stop.latitude, lng: stop.longitude }}
+            onClick={() => {
+              setSelectedStation(stop);
+              if (onSelectStation) onSelectStation(stop.stationCode);
+            }}
+          >
+            <div className={`rounded-full flex items-center justify-center font-mono-code font-extrabold border-2 cursor-pointer transition-transform hover:scale-125 ${bgClass} ${sizeClass}`}>
+              {badgeLabel}
+            </div>
+          </AdvancedMarker>
+        );
+      })}
+
+      {/* Interactive Station InfoWindow */}
+      {selectedStation && (
+        <InfoWindow
+          position={{ lat: selectedStation.latitude, lng: selectedStation.longitude }}
+          onCloseClick={() => setSelectedStation(null)}
+        >
+          <div className="p-2 text-slate-900 font-sans min-w-[200px]">
+            <div className="flex items-center justify-between gap-2 border-b border-slate-200 pb-1.5 mb-1.5">
+              <span className="font-mono font-bold text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-800">
+                {selectedStation.stationCode}
+              </span>
+              <span className="text-[11px] font-semibold text-slate-500">
+                Platform {selectedStation.platform || 1}
+              </span>
+            </div>
+            <div className="font-bold text-sm text-slate-900 mb-1">
+              {selectedStation.stationName}
+            </div>
+            <div className="text-xs text-slate-600 space-y-0.5 font-mono">
+              <div>Scheduled: <span className="font-semibold">{selectedStation.scheduledArrival} - {selectedStation.scheduledDeparture}</span></div>
+              {selectedStation.actualArrival && (
+                <div className="text-emerald-700 font-semibold">
+                  Actual: {selectedStation.actualArrival}
+                </div>
+              )}
+              {selectedStation.predictedDelayMinutes !== undefined && selectedStation.predictedDelayMinutes > 0 && (
+                <div className="text-rose-600 font-bold">
+                  Expected Delay: +{selectedStation.predictedDelayMinutes} mins
+                </div>
+              )}
+            </div>
+          </div>
+        </InfoWindow>
+      )}
+
+      {/* Live Train Marker with Radar Waves and Bearing Nose Arrow */}
+      <AdvancedMarker
+        position={{ lat: train.currentLatitude, lng: train.currentLongitude }}
+        zIndex={1000}
+      >
+        <div className="relative flex items-center justify-center pointer-events-auto select-none">
+          {/* Animated radar rings */}
+          <div className="absolute w-12 h-12 rounded-full bg-blue-500/25 animate-ping" />
+          <div className="absolute w-9 h-9 rounded-full bg-blue-400/20 animate-pulse" />
+
+          {/* Rotating Train Engine */}
+          <div 
+            className="relative w-10 h-10 rounded-full bg-slate-950 border-2 border-amber-500 text-white flex items-center justify-center shadow-2xl transition-transform duration-500"
+            style={{ transform: `rotate(${Math.round(bearingAngle)}deg)` }}
+          >
+            {/* Direction Arrow Indicator */}
+            <div className="absolute -top-1.5 w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-b-[7px] border-b-amber-500" />
+            <TrainIcon className="w-4 h-4 text-amber-400" />
+          </div>
+
+          {/* Floating Speed & Train Number Pill */}
+          <div className="absolute -top-7 whitespace-nowrap bg-blue-600 text-white font-mono-code font-extrabold text-[10px] px-2.5 py-0.5 rounded-full shadow-lg border border-blue-400 flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block animate-pulse" />
+            <span>{train.trainNumber} • {train.currentSpeedKmH} km/h</span>
+          </div>
+        </div>
+      </AdvancedMarker>
+
+      {/* Live User Location Marker */}
+      {userLocation && (
+        <AdvancedMarker
+          position={{ lat: userLocation.lat, lng: userLocation.lng }}
+          zIndex={950}
+        >
+          <div className="relative flex items-center justify-center">
+            <div className="absolute w-8 h-8 rounded-full bg-blue-500/30 animate-ping" />
+            <div className="relative w-6 h-6 rounded-full bg-blue-600 border-2 border-white text-white flex items-center justify-center shadow-lg">
+              <LocateFixed className="w-3 h-3 text-white" />
+            </div>
+          </div>
+        </AdvancedMarker>
+      )}
+    </>
+  );
+};
+
+export const LiveTrainMap: React.FC<LiveTrainMapProps> = ({ train, onSelectStation }) => {
+  const [isFollowTrain, setIsFollowTrain] = useState<boolean>(true);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number; accuracy: number } | null>(null);
+  const [isLocating, setIsLocating] = useState(false);
+  const [mapType, setMapType] = useState<'roadmap' | 'satellite' | 'hybrid' | 'terrain'>('roadmap');
+  const [isDarkTheme, setIsDarkTheme] = useState<boolean>(() => document.documentElement.classList.contains('dark'));
+
+  // Watch dark mode changes
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsDarkTheme(document.documentElement.classList.contains('dark'));
+    });
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
     return () => observer.disconnect();
   }, []);
 
-  // Update Tracks (Polylines)
-  useEffect(() => {
-    if (!trackBedLayerRef.current || !passedLayerRef.current || !upcomingLayerRef.current) return;
-
-    const allStopsCoords: [number, number][] = train.stops.map(s => [s.latitude, s.longitude]);
-    trackBedLayerRef.current.setLatLngs(allStopsCoords);
-
-    const curIdx = Math.max(0, Math.min(train.stops.length - 1, train.currentStationIndex));
-
-    const passedCoords: [number, number][] = [
-      ...train.stops.slice(0, curIdx + 1).map(s => [s.latitude, s.longitude] as [number, number]),
-      [train.currentLatitude, train.currentLongitude]
-    ];
-    passedLayerRef.current.setLatLngs(passedCoords);
-
-    const upcomingCoords: [number, number][] = [
-      [train.currentLatitude, train.currentLongitude],
-      ...train.stops.slice(curIdx + 1).map(s => [s.latitude, s.longitude] as [number, number])
-    ];
-    upcomingLayerRef.current.setLatLngs(upcomingCoords);
-    upcomingLayerRef.current.setStyle({
-      color: train.currentDelayMinutes > 15 ? '#F59E0B' : '#2563EB',
-    });
-  }, [train]);
-
-  // Update Station Markers
-  useEffect(() => {
-    const group = stationMarkersGroupRef.current;
-    if (!group) return;
-
-    group.clearLayers();
-
-    train.stops.forEach((stop, index) => {
-      const isOrigin = index === 0;
-      const isDestination = index === train.stops.length - 1;
-      const isCurrent = stop.status === 'CURRENT';
-      const isNext = stop.status === 'NEXT';
-
-      let markerBg = 'background-color: #334155; color: #FFFFFF; border-color: #1E293B;';
-      let badgeLabel = `${index + 1}`;
-      let size = 28;
-
-      if (isOrigin) {
-        markerBg = 'background-color: #059669; color: #FFFFFF; border-color: #064E3B; box-shadow: 0 4px 12px rgba(5,150,105,0.4);';
-        badgeLabel = 'SRC';
-        size = 32;
-      } else if (isDestination) {
-        markerBg = 'background-color: #2563EB; color: #FFFFFF; border-color: #1E3A8A; box-shadow: 0 4px 12px rgba(37,99,235,0.4);';
-        badgeLabel = 'DEST';
-        size = 32;
-      } else if (isCurrent) {
-        markerBg = 'background-color: #2563EB; color: #FFFFFF; border-color: #60A5FA; box-shadow: 0 0 0 4px rgba(96,165,250,0.4);';
-      } else if (isNext) {
-        markerBg = stop.riskLevel === 'HIGH'
-          ? 'background-color: #DC2626; color: #FFFFFF; border-color: #F87171; box-shadow: 0 0 0 3px rgba(239,68,68,0.4);'
-          : 'background-color: #D97706; color: #FFFFFF; border-color: #FCD34D; box-shadow: 0 0 0 3px rgba(245,158,11,0.4);';
-      } else if (stop.status === 'DEPARTED') {
-        markerBg = 'background-color: #059669; color: #FFFFFF; border-color: #047857;';
-      }
-
-      const iconHtml = `
-        <div style="
-          width: ${size}px;
-          height: ${size}px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: 800;
-          font-size: ${size > 30 ? '10px' : '11px'};
-          font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-          border: 2px solid;
-          cursor: pointer;
-          transition: transform 0.2s ease;
-          ${markerBg}
-        " onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">
-          ${badgeLabel}
-        </div>
-      `;
-
-      const customIcon = L.divIcon({
-        html: iconHtml,
-        className: 'station-marker-icon',
-        iconSize: [size, size],
-        iconAnchor: [size / 2, size / 2],
-      });
-
-      const marker = L.marker([stop.latitude, stop.longitude], { icon: customIcon });
-
-      // Custom tooltip
-      const tooltipContent = `
-        <div style="font-family: inherit; font-size: 12px; line-height: 1.4; padding: 2px;">
-          <div style="font-weight: 700; color: #3B82F6; font-family: monospace;">${stop.stationCode}</div>
-          <div style="font-weight: 600; color: #F1F5F9;">${stop.stationName}</div>
-          <div style="color: #94A3B8; font-size: 11px; margin-top: 2px;">
-            Arr: ${stop.scheduledArrival} • Dep: ${stop.scheduledDeparture}
-          </div>
-          ${stop.actualArrival ? `<div style="color: #34D399; font-size: 11px; font-weight: 600;">Status: ${stop.status} (+${stop.delayMinutes}m)</div>` : ''}
-        </div>
-      `;
-
-      marker.bindTooltip(tooltipContent, {
-        className: 'custom-station-tooltip',
-        direction: 'top',
-        offset: [0, -size / 2 - 2],
-        opacity: 0.96,
-      });
-
-      marker.on('click', () => {
-        if (onSelectStation) {
-          onSelectStation(stop.stationCode);
-        }
-      });
-
-      group.addLayer(marker);
-    });
-  }, [train.stops, onSelectStation]);
-
-  // Update Train Live GPS Marker
-  useEffect(() => {
-    const map = mapInstanceRef.current;
-    if (!map) return;
-
-    const trainHtml = `
-      <div style="position: relative; display: flex; align-items: center; justify-content: center; pointer-events: auto; user-select: none;">
-        <!-- Radar wave animations -->
-        <div style="position: absolute; width: 48px; height: 48px; border-radius: 50%; background: rgba(59, 130, 246, 0.25); animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
-        <div style="position: absolute; width: 36px; height: 36px; border-radius: 50%; background: rgba(96, 165, 250, 0.2); animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;"></div>
-        
-        <!-- Rotating Train Engine Indicator -->
-        <div style="
-          position: relative;
-          width: 38px;
-          height: 38px;
-          border-radius: 50%;
-          background: #0A192F;
-          border: 2px solid #F59E0B;
-          color: #FFFFFF;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6);
-          transform: rotate(${Math.round(bearingAngle)}deg);
-          transition: transform 0.5s ease-out;
-        ">
-          <!-- Direction Arrow Nose -->
-          <div style="position: absolute; top: -5px; width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-bottom: 7px solid #F59E0B;"></div>
-          <svg style="width: 18px; height: 18px; color: #F59E0B;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <rect x="4" y="3" width="16" height="16" rx="2"></rect>
-            <path d="M4 11h16"></path>
-            <path d="M12 3v8"></path>
-            <path d="m8 19-2 3"></path>
-            <path d="m16 19 2 3"></path>
-            <circle cx="8" cy="15" r="1" fill="currentColor"></circle>
-            <circle cx="16" cy="15" r="1" fill="currentColor"></circle>
-          </svg>
-        </div>
-
-        <!-- Train Speed & Number Floating Pill -->
-        <div style="
-          position: absolute;
-          top: -26px;
-          white-space: nowrap;
-          background: #2563EB;
-          color: #FFFFFF;
-          font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-          font-weight: 800;
-          font-size: 10px;
-          padding: 2px 8px;
-          border-radius: 9999px;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-          border: 1px solid #60A5FA;
-          display: flex;
-          align-items: center;
-          gap: 4px;
-        ">
-          <span style="width: 6px; height: 6px; border-radius: 50%; background: #6EE7B7; display: inline-block;"></span>
-          <span>${train.trainNumber} • ${train.currentSpeedKmH} km/h</span>
-        </div>
-      </div>
-    `;
-
-    const trainIcon = L.divIcon({
-      html: trainHtml,
-      className: 'live-train-marker-icon',
-      iconSize: [48, 48],
-      iconAnchor: [24, 24],
-    });
-
-    if (!trainMarkerRef.current) {
-      trainMarkerRef.current = L.marker([train.currentLatitude, train.currentLongitude], {
-        icon: trainIcon,
-        zIndexOffset: 1000,
-      }).addTo(map);
-    } else {
-      trainMarkerRef.current.setLatLng([train.currentLatitude, train.currentLongitude]);
-      trainMarkerRef.current.setIcon(trainIcon);
-    }
-
-    if (isFollowTrain) {
-      map.panTo([train.currentLatitude, train.currentLongitude], { animate: true, duration: 0.8 });
-    }
-  }, [train.currentLatitude, train.currentLongitude, train.currentSpeedKmH, train.trainNumber, bearingAngle, isFollowTrain]);
-
-  // Fit route when train changes
-  useEffect(() => {
-    if (!mapInstanceRef.current) return;
-    if (prevTrainIdRef.current !== train.id) {
-      prevTrainIdRef.current = train.id;
-      handleFitRoute();
-    }
-  }, [train.id]);
-
-  // Geolocation tracking
+  // HTML5 User Geolocation tracking
   useEffect(() => {
     if (!('geolocation' in navigator)) return;
 
     const watchId = navigator.geolocation.watchPosition(
       (pos) => {
-        const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy };
-        setUserLocation(loc);
-        setIsLocating(false);
-
-        const map = mapInstanceRef.current;
-        if (!map) return;
-
-        const userHtml = `
-          <div style="position: relative; display: flex; align-items: center; justify-content: center;">
-            <div style="position: absolute; width: 32px; height: 32px; border-radius: 50%; background: rgba(37, 99, 235, 0.3); animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
-            <div style="position: relative; width: 24px; height: 24px; border-radius: 50%; background: #2563EB; border: 2.5px solid #FFFFFF; color: #FFFFFF; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
-              <svg style="width: 12px; height: 12px; color: #FFFFFF;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                <circle cx="12" cy="12" r="4" fill="currentColor"></circle>
-                <path d="M12 2v3m0 14v3m10-10h-3M5 12H2"></path>
-              </svg>
-            </div>
-          </div>
-        `;
-
-        const userIcon = L.divIcon({
-          html: userHtml,
-          className: 'user-location-marker-icon',
-          iconSize: [32, 32],
-          iconAnchor: [16, 16],
+        setUserLocation({
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+          accuracy: pos.coords.accuracy
         });
-
-        if (!userMarkerRef.current) {
-          userMarkerRef.current = L.marker([loc.lat, loc.lng], {
-            icon: userIcon,
-            zIndexOffset: 950,
-          }).addTo(map);
-        } else {
-          userMarkerRef.current.setLatLng([loc.lat, loc.lng]);
-        }
-
-        if (!userAccuracyCircleRef.current) {
-          userAccuracyCircleRef.current = L.circle([loc.lat, loc.lng], {
-            radius: Math.min(500, loc.accuracy),
-            color: '#3B82F6',
-            fillColor: '#3B82F6',
-            fillOpacity: 0.1,
-            weight: 1,
-          }).addTo(map);
-        } else {
-          userAccuracyCircleRef.current.setLatLng([loc.lat, loc.lng]);
-          userAccuracyCircleRef.current.setRadius(Math.min(500, loc.accuracy));
-        }
+        setIsLocating(false);
       },
-      () => { setIsLocating(false); },
+      () => setIsLocating(false),
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 15000 }
     );
 
     return () => navigator.geolocation.clearWatch(watchId);
   }, []);
 
-  const handleFitRoute = () => {
-    const map = mapInstanceRef.current;
-    if (!map) return;
-
-    setIsFollowTrain(false);
-    const bounds = L.latLngBounds([]);
-    train.stops.forEach(s => bounds.extend([s.latitude, s.longitude]));
-    bounds.extend([train.currentLatitude, train.currentLongitude]);
-    if (userLocation) bounds.extend([userLocation.lat, userLocation.lng]);
-
-    if (bounds.isValid()) {
-      map.fitBounds(bounds, { padding: [50, 50], maxZoom: 12 });
-    }
-  };
-
-  const handleFocusTrain = () => {
-    const map = mapInstanceRef.current;
-    if (!map) return;
-    setIsFollowTrain(true);
-    map.setView([train.currentLatitude, train.currentLongitude], 12, { animate: true });
-  };
-
-  const handleLocateUser = () => {
-    const map = mapInstanceRef.current;
-    if (!map) return;
-    setIsFollowTrain(false);
-
-    if (userLocation) {
-      map.setView([userLocation.lat, userLocation.lng], 14, { animate: true });
-    } else if (navigator.geolocation) {
-      setIsLocating(true);
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy };
-          setUserLocation(loc);
-          setIsLocating(false);
-          map.setView([loc.lat, loc.lng], 14, { animate: true });
-        },
-        () => setIsLocating(false),
-        { enableHighAccuracy: true }
-      );
-    }
-  };
-
-  const handleZoomIn = () => {
-    if (mapInstanceRef.current) {
-      mapInstanceRef.current.zoomIn();
-    }
-  };
-
-  const handleZoomOut = () => {
-    if (mapInstanceRef.current) {
-      mapInstanceRef.current.zoomOut();
-    }
-  };
-
   return (
     <div className="relative isolate w-full h-full min-h-[360px] sm:min-h-[460px] bg-surface rounded-2xl sm:rounded-3xl overflow-hidden border border-border shadow-xs flex flex-col text-ink">
       {/* Top telemetry bar & Quick Status */}
-      <div className="absolute top-2.5 left-2.5 right-2.5 sm:top-3 sm:left-3 sm:right-3 z-1000 flex items-start justify-between gap-2 pointer-events-none">
+      <div className="absolute top-2.5 left-2.5 right-2.5 sm:top-3 sm:left-3 sm:right-3 z-10 flex items-start justify-between gap-2 pointer-events-none">
         <div className="bg-surface/95 backdrop-blur-md text-ink px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-xl sm:rounded-2xl shadow-lg border border-border pointer-events-auto flex items-center gap-2 sm:gap-3 text-[11px] sm:text-xs font-semibold max-w-[calc(100%-48px)] sm:max-w-none overflow-x-auto no-scrollbar">
           <div className="flex items-center gap-1.5 font-mono-code shrink-0">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-            <span className="text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wide">
-              <span className="inline sm:hidden">LIVE</span>
-              <span className="hidden sm:inline">LIVE GPS • MOVING</span>
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+            <span className="text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wide flex items-center gap-1">
+              <Sparkles className="w-3 h-3 text-emerald-500 inline" />
+              <span>GOOGLE MAPS • LIVE TRACKING</span>
             </span>
           </div>
-          <div className="h-3 w-px bg-border shrink-0"></div>
+          <div className="h-3 w-px bg-border shrink-0" />
           <div className="flex items-center gap-1 text-ink font-mono-code shrink-0">
             <Gauge className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-accent" />
             <span className="font-bold">{train.currentSpeedKmH} <span className="text-[10px] text-ink/60">km/h</span></span>
           </div>
-          <div className="h-3 w-px bg-border shrink-0"></div>
+          <div className="h-3 w-px bg-border shrink-0" />
           <div className="flex items-center gap-1 text-ink shrink-0 font-mono-code">
             <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-500" />
             <span>
@@ -499,7 +403,7 @@ export const LiveTrainMap: React.FC<LiveTrainMapProps> = ({ train, onSelectStati
         </div>
 
         {/* Floating Controls Toolbar */}
-        <div className="flex flex-col gap-1.5 pointer-events-auto shrink-0 z-1000">
+        <div className="flex flex-col gap-1.5 pointer-events-auto shrink-0 z-10">
           <button
             type="button"
             onClick={() => setIsFollowTrain(!isFollowTrain)}
@@ -512,56 +416,81 @@ export const LiveTrainMap: React.FC<LiveTrainMapProps> = ({ train, onSelectStati
           >
             <Crosshair className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isFollowTrain ? 'animate-spin' : ''}`} />
           </button>
+
           <button 
             type="button" 
-            onClick={handleFocusTrain} 
+            onClick={() => {
+              setIsFollowTrain(true);
+            }} 
             title="Focus on Train"
             className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-surface/95 hover:bg-surface-dark text-ink hover:text-accent border border-border flex items-center justify-center cursor-pointer shadow-md transition-colors"
           >
             <TrainIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </button>
+
           <button 
             type="button" 
-            onClick={handleLocateUser} 
+            onClick={() => {
+              if (navigator.geolocation) {
+                setIsLocating(true);
+                navigator.geolocation.getCurrentPosition(
+                  (pos) => {
+                    setUserLocation({
+                      lat: pos.coords.latitude,
+                      lng: pos.coords.longitude,
+                      accuracy: pos.coords.accuracy
+                    });
+                    setIsLocating(false);
+                    setIsFollowTrain(false);
+                  },
+                  () => setIsLocating(false),
+                  { enableHighAccuracy: true }
+                );
+              }
+            }} 
             title="My Location"
             className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-surface/95 hover:bg-surface-dark text-ink hover:text-accent border border-border flex items-center justify-center cursor-pointer shadow-md transition-colors"
           >
             <LocateFixed className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isLocating ? 'animate-spin' : ''}`} />
           </button>
-          <button 
-            type="button" 
-            onClick={handleFitRoute} 
-            title="Fit Entire Route"
-            className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-surface/95 hover:bg-surface-dark text-ink hover:text-accent border border-border flex items-center justify-center cursor-pointer shadow-md transition-colors"
+
+          <button
+            type="button"
+            onClick={() => {
+              setMapType(prev => prev === 'roadmap' ? 'hybrid' : prev === 'hybrid' ? 'terrain' : 'roadmap');
+            }}
+            title={`Map Layer: ${mapType.toUpperCase()}`}
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-surface/95 hover:bg-surface-dark text-ink hover:text-accent border border-border flex items-center justify-center cursor-pointer shadow-md transition-colors font-mono text-[9px] font-bold uppercase"
           >
-            <Maximize2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <Layers className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </button>
-          <div className="flex flex-col rounded-xl overflow-hidden border border-border shadow-md bg-surface/95">
-            <button
-              type="button"
-              onClick={handleZoomIn}
-              title="Zoom In"
-              className="w-8 h-8 sm:w-9 sm:h-8 hover:bg-surface-dark text-ink hover:text-accent flex items-center justify-center cursor-pointer transition-colors border-b border-border/50"
-            >
-              <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            </button>
-            <button
-              type="button"
-              onClick={handleZoomOut}
-              title="Zoom Out"
-              className="w-8 h-8 sm:w-9 sm:h-8 hover:bg-surface-dark text-ink hover:text-accent flex items-center justify-center cursor-pointer transition-colors"
-            >
-              <Minus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            </button>
-          </div>
         </div>
       </div>
 
-      {/* Map Rendering Container */}
-      <div 
-        ref={mapContainerRef} 
-        className="w-full flex-1 z-0 min-h-[300px] sm:min-h-[400px] bg-slate-900"
-      />
+      {/* Google Maps View */}
+      <div className="w-full flex-1 z-0 min-h-[300px] sm:min-h-[400px] bg-slate-900">
+        <APIProvider apiKey={GOOGLE_MAPS_API_KEY}>
+          <GoogleMap
+            id="live-train-google-map"
+            defaultCenter={{ lat: train.currentLatitude, lng: train.currentLongitude }}
+            defaultZoom={8}
+            gestureHandling="greedy"
+            disableDefaultUI={true}
+            mapTypeId={mapType}
+            styles={isDarkTheme && mapType === 'roadmap' ? DARK_MAP_STYLES : []}
+            className="w-full h-full"
+          >
+            <GoogleMapsOverlay
+              train={train}
+              onSelectStation={onSelectStation}
+              isFollowTrain={isFollowTrain}
+              setIsFollowTrain={setIsFollowTrain}
+              userLocation={userLocation}
+              mapType={mapType}
+            />
+          </GoogleMap>
+        </APIProvider>
+      </div>
 
       {/* Bottom Telemetry Info Footer */}
       <div className="bg-surface/95 backdrop-blur-md text-ink px-3 sm:px-4 py-2 sm:py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-3 text-xs z-10 border-t border-border">
