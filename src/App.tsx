@@ -260,7 +260,7 @@ export function App() {
     return (
       <LoginPage 
         onLoginSuccess={handleLoginSuccess}
-        defaultRole="OPERATOR"
+        defaultRole="PASSENGER"
       />
     );
   }

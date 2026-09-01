@@ -6,10 +6,9 @@ import {
   LiveTrackingTelemetry
 } from './trackingEngine';
 
-// Initialize the Google GenAI SDK
-// Using the recommended server-side initialization with telemetry header
+// Initialize the Google GenAI SDK safely
 const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY,
+  apiKey: process.env.GEMINI_API_KEY || 'dummy_api_key',
   httpOptions: {
     headers: {
       'User-Agent': 'aistudio-build'

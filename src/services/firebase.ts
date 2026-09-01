@@ -359,22 +359,26 @@ export async function signInUser(
         loginTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
       
-      try {
-        await logUserActivity(authUser.uid, {
-          activityType: 'LOGIN',
-          title: 'Logged in as Chief Section Controller',
-          details: `Sign-in session initiated from ${cleanEmail} via Official Operator Portal.`
-        });
-      } catch (e) {
-        console.warn('Operator activity log note:', e);
-      }
+      logUserActivity(authUser.uid, {
+        activityType: 'LOGIN',
+        title: 'Logged in as Chief Section Controller',
+        details: `Sign-in session initiated from ${cleanEmail} via Official Operator Portal.`
+      }).catch(() => {});
 
       return { success: true, user: authUser };
     } else {
-      return {
-        success: false,
-        error: 'Invalid Operator credentials. Access restricted to authorized Railway Controllers.'
-      };
+      // Check if this operator account is registered in Firebase Auth
+      try {
+        const userCredential = await signInWithEmailAndPassword(auth, cleanEmail, cleanPass);
+        const fbUser = userCredential.user;
+        const authUser = formatAuthUser(fbUser, 'OPERATOR');
+        return { success: true, user: authUser };
+      } catch {
+        return {
+          success: false,
+          error: 'Invalid Operator credentials. Access restricted to authorized Railway Controllers.'
+        };
+      }
     }
   }
 
@@ -382,45 +386,15 @@ export async function signInUser(
     const userCredential = await signInWithEmailAndPassword(auth, cleanEmail, cleanPass);
     const fbUser = userCredential.user;
 
-    // Sync profile to Firestore
-    try {
-      await syncUserProfileToFirestore(fbUser, 'PASSENGER');
-    } catch (e) {
-      console.warn('Profile sync note:', e);
-    }
+    const authUser = formatAuthUser(fbUser, 'PASSENGER');
 
-    // Fetch user profile doc
-    let profileName: string | undefined;
-    let badgeId: string | undefined;
-    let department: string | undefined;
-    try {
-      const docSnap = await getDoc(doc(db, 'users', fbUser.uid));
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        profileName = data.displayName;
-        badgeId = data.badgeId;
-        department = data.department;
-      }
-    } catch (e) {
-      console.warn('Profile read warning:', e);
-    }
-
-    const authUser = formatAuthUser(fbUser, 'PASSENGER', {
-      name: profileName,
-      badgeId: badgeId,
-      department: department || 'Commuter / Live Traveler Portal'
-    });
-
-    // Log Activity to Firestore
-    try {
-      await logUserActivity(fbUser.uid, {
-        activityType: 'LOGIN',
-        title: 'Logged in as Commuter',
-        details: `Sign-in session initiated from ${cleanEmail} via Firebase Auth.`
-      });
-    } catch (e) {
-      console.warn('Login activity note:', e);
-    }
+    // Non-blocking background sync
+    syncUserProfileToFirestore(fbUser, 'PASSENGER').catch(() => {});
+    logUserActivity(fbUser.uid, {
+      activityType: 'LOGIN',
+      title: 'Logged in as Commuter',
+      details: `Sign-in session initiated from ${cleanEmail} via Firebase Auth.`
+    }).catch(() => {});
 
     return { success: true, user: authUser };
 
@@ -434,19 +408,6 @@ export async function signInUser(
       errorMsg = 'Incorrect password. Please try again.';
     } else if (err.code === 'auth/too-many-requests') {
       errorMsg = 'Access temporarily disabled due to many failed attempts. Please try again later.';
-    }
-
-    // Fallback for sandboxed offline preview if network is blocked or Firebase is unavailable
-    if (err.message && (err.message.includes('network') || err.message.includes('offline') || err.code === 'auth/network-request-failed' || err.code === 'auth/internal-error')) {
-      const fallbackUser: AuthUser = {
-        uid: 'user-' + Math.random().toString(36).substring(2, 8),
-        email: cleanEmail,
-        role: 'PASSENGER',
-        name: cleanEmail.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
-        department: 'Commuter / Live Traveler Portal',
-        loginTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      };
-      return { success: true, user: fallbackUser };
     }
 
     return { success: false, error: errorMsg };
@@ -486,7 +447,7 @@ export async function signUpUser(
   if (role === 'OPERATOR') {
     return { 
       success: false, 
-      error: 'Operator registration is disabled. Railway Section Controller access is sign-in only with official credentials (trainoperator@gmail.com).' 
+      error: 'Operator registration is disabled. Railway Section Controller access is sign-in only with official credentials.' 
     };
   }
 
@@ -494,25 +455,20 @@ export async function signUpUser(
     const userCredential = await createUserWithEmailAndPassword(auth, cleanEmail, cleanPass);
     const fbUser = userCredential.user;
 
-    // Update Firebase Auth Display Name
-    try {
-      await updateProfile(fbUser, { displayName: cleanName });
-    } catch (e) {
-      console.warn('Update profile note:', e);
-    }
-
-    // Save Profile to Firestore
-    try {
-      await syncUserProfileToFirestore(fbUser, role, {
-        displayName: cleanName,
-        phone: extraData.phone,
-        department: extraData.department,
-        badgeId: extraData.badgeId,
-        pnrOrTicket: extraData.pnrOrTicket
-      });
-    } catch (e) {
-      console.warn('Firestore profile sync note:', e);
-    }
+    // Non-blocking profile update & sync
+    updateProfile(fbUser, { displayName: cleanName }).catch(() => {});
+    syncUserProfileToFirestore(fbUser, role, {
+      displayName: cleanName,
+      phone: extraData.phone,
+      department: extraData.department,
+      badgeId: extraData.badgeId,
+      pnrOrTicket: extraData.pnrOrTicket
+    }).catch(() => {});
+    logUserActivity(fbUser.uid, {
+      activityType: 'SIGN_UP',
+      title: `Account Created (${role})`,
+      details: `New account registered for ${cleanName} (${cleanEmail}).`
+    }).catch(() => {});
 
     const authUser = formatAuthUser(fbUser, role, {
       name: cleanName,
@@ -521,17 +477,6 @@ export async function signUpUser(
       pnrOrTicket: extraData.pnrOrTicket,
       phone: extraData.phone
     });
-
-    // Log Activity in Firestore
-    try {
-      await logUserActivity(fbUser.uid, {
-        activityType: 'SIGN_UP',
-        title: `Account Created (${role})`,
-        details: `New account registered for ${cleanName} (${cleanEmail}) on Firebase Cloud Firestore.`
-      });
-    } catch (e) {
-      console.warn('Sign up activity log note:', e);
-    }
 
     return { success: true, user: authUser };
 
@@ -545,22 +490,6 @@ export async function signUpUser(
       errorMsg = 'Password is too weak. Please use at least 6 characters with letters and numbers.';
     } else if (err.code === 'auth/invalid-email') {
       errorMsg = 'The email address is invalid.';
-    }
-
-    // Fallback if network blocked or offline in container
-    if (err.message && (err.message.includes('network') || err.message.includes('offline') || err.code === 'auth/network-request-failed' || err.code === 'auth/internal-error')) {
-      const fallbackUser: AuthUser = {
-        uid: 'user-' + Math.random().toString(36).substring(2, 8),
-        email: cleanEmail,
-        role: role,
-        name: cleanName,
-        department: extraData.department || 'Commuter Portal',
-        badgeId: extraData.badgeId,
-        pnrOrTicket: extraData.pnrOrTicket,
-        phone: extraData.phone,
-        loginTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      };
-      return { success: true, user: fallbackUser };
     }
 
     return { success: false, error: errorMsg };
@@ -582,17 +511,7 @@ export async function signInWithGoogle(
 
   try {
     isSigningIn = true;
-    
-    // In iframe previews, signInWithPopup can hang indefinitely if popups are suppressed.
-    // Wrap with a race timeout so the user is never stuck in an authenticating state.
-    const popupPromise = signInWithPopup(auth, googleProvider);
-    const timeoutPromise = new Promise<never>((_, reject) => {
-      setTimeout(() => {
-        reject(new Error('POPUP_TIMEOUT_OR_BLOCKED'));
-      }, 6000);
-    });
-
-    const result = await Promise.race([popupPromise, timeoutPromise]);
+    const result = await signInWithPopup(auth, googleProvider);
     const fbUser = result.user;
     const credential = GoogleAuthProvider.credentialFromResult(result);
     
@@ -600,66 +519,31 @@ export async function signInWithGoogle(
       cachedAccessToken = credential.accessToken;
     }
 
-    try {
-      await syncUserProfileToFirestore(fbUser, 'PASSENGER');
-    } catch (e) {
-      console.warn('Profile sync note:', e);
-    }
-
     const authUser = formatAuthUser(fbUser, 'PASSENGER');
 
-    try {
-      await logUserActivity(fbUser.uid, {
-        activityType: 'LOGIN',
-        title: `Google Sign-in (PASSENGER)`,
-        details: `Authenticated via Google Identity for ${fbUser.email}`
-      });
-    } catch (e) {
-      console.warn('Google login activity note:', e);
-    }
+    // Non-blocking background sync
+    syncUserProfileToFirestore(fbUser, 'PASSENGER').catch(() => {});
+    logUserActivity(fbUser.uid, {
+      activityType: 'LOGIN',
+      title: `Google Sign-in (PASSENGER)`,
+      details: `Authenticated via Google Identity for ${fbUser.email}`
+    }).catch(() => {});
 
     return { success: true, user: authUser, accessToken: cachedAccessToken || undefined };
   } catch (err: any) {
     console.warn('Google sign-in status note:', err);
 
-    const isSandboxOrIframeIssue = 
-      err?.message === 'POPUP_TIMEOUT_OR_BLOCKED' ||
-      err?.code === 'auth/popup-blocked' ||
-      err?.code === 'auth/unauthorized-domain' ||
-      err?.code === 'auth/operation-not-supported-in-this-environment' ||
-      err?.code === 'auth/cancelled-popup-request' ||
-      err?.code === 'auth/network-request-failed' ||
-      (err?.message && (err.message.includes('popup') || err.message.includes('domain') || err.message.includes('network') || err.message.includes('iframe')));
-
-    // If popup is blocked by browser/sandbox or timed out, provide seamless passenger session so user is never locked out
-    if (isSandboxOrIframeIssue) {
-      console.info('Activating Google Auth passenger session for preview environment');
-      const fallbackGoogleUser: AuthUser = {
-        uid: 'google-user-' + Math.random().toString(36).substring(2, 9),
-        email: 'passenger.live@smarteta.in',
-        role: 'PASSENGER',
-        name: 'Google Verified Commuter',
-        department: 'Commuter / Live Traveler Portal',
-        loginTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      };
-      
-      try {
-        await logUserActivity(fallbackGoogleUser.uid, {
-          activityType: 'LOGIN',
-          title: `Google Sign-in (PASSENGER)`,
-          details: `Authenticated via Google Identity for ${fallbackGoogleUser.email}`
-        });
-      } catch (e) {
-        // ignore fallback log note
-      }
-
-      return { success: true, user: fallbackGoogleUser };
-    }
-
     if (err?.code === 'auth/popup-closed-by-user') {
       return { 
         success: false, 
-        error: 'Google Sign-in popup was closed. You can also sign in with email and password below.' 
+        error: 'Google Sign-in popup was closed.' 
+      };
+    }
+
+    if (err?.code === 'auth/unauthorized-domain') {
+      return {
+        success: false,
+        error: 'This domain/localhost is not authorized in Firebase Auth settings. Please use Email/Password sign in.'
       };
     }
 

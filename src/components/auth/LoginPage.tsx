@@ -148,23 +148,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       }
     } catch (err: any) {
       console.warn('Google auth handling error:', err);
-      setErrorMessage('Google Sign-in encountered a sandbox delay. Please use Email Registration or Instant Access.');
+      setErrorMessage(err?.message || 'Google Sign-in encountered an error. Please use Email/Password sign in.');
     } finally {
       setIsGoogleSubmitting(false);
     }
-  };
-
-  // Quick Demo Passenger Login
-  const handleQuickPassengerLogin = () => {
-    const quickUser: AuthUser = {
-      uid: 'commuter-' + Math.random().toString(36).substring(2, 9),
-      email: 'traveler@smarteta.in',
-      role: 'PASSENGER',
-      name: 'Verified Commuter',
-      department: 'Commuter / Live Traveler Portal',
-      loginTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
-    onLoginSuccess(quickUser);
   };
 
   return (
@@ -283,32 +270,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 }`}
               >
                 New Registration
-              </button>
-            </div>
-          )}
-
-          {/* Operator Credentials Notice (Official Railway Access Only) */}
-          {selectedRole === 'OPERATOR' && (
-            <div className="p-3.5 bg-surface-dark border border-border rounded-xl text-ink text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5">
-                <KeyRound className="w-4 h-4 text-accent shrink-0" />
-                <span className="font-medium">
-                  Official Railway Controller:
-                </span>
-                <span className="font-mono-code text-[11px] px-2 py-0.5 rounded bg-accent/15 text-accent font-bold">
-                  trainoperator@gmail.com
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setEmail('trainoperator@gmail.com');
-                  setPassword('eta161739');
-                  setErrorMessage(null);
-                }}
-                className="px-2.5 py-1 rounded-lg bg-surface border border-border hover:border-accent text-accent font-mono-code text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer self-start sm:self-auto"
-              >
-                Auto-Fill
               </button>
             </div>
           )}
@@ -537,18 +498,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   </>
                 )}
               </button>
-
-              {/* Instant Commuter Preview Access */}
-              {selectedRole === 'PASSENGER' && (
-                <button
-                  type="button"
-                  onClick={handleQuickPassengerLogin}
-                  className="w-full py-2 bg-surface hover:bg-surface-dark border border-border text-ink/70 hover:text-ink font-mono-code text-[11px] font-bold uppercase tracking-wider rounded-xl transition-colors flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <Sparkles className="w-3.5 h-3.5 text-accent" />
-                  <span>Instant Guest Commuter Access</span>
-                </button>
-              )}
             </div>
           </form>
 

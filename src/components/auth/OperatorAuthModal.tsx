@@ -71,24 +71,11 @@ export const OperatorAuthModal: React.FC<OperatorAuthModalProps> = ({
         </div>
 
         {/* Security Warning Notice */}
-        <div className="mt-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 text-xs flex items-start justify-between gap-2.5">
-          <div className="flex items-start gap-2.5">
-            <Lock className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-            <span>
-              The Operator Console controls live interlocking signals, what-if simulations, and dispatch telemetry.
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={() => {
-              setEmail('trainoperator@gmail.com');
-              setPassword('eta161739');
-              setError(null);
-            }}
-            className="px-2 py-1 rounded-lg bg-surface border border-border hover:border-accent text-accent font-mono-code text-[10px] font-bold uppercase tracking-wider shrink-0 cursor-pointer"
-          >
-            Auto-Fill
-          </button>
+        <div className="mt-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 text-xs flex items-start gap-2.5">
+          <Lock className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+          <span>
+            The Operator Console controls live interlocking signals, what-if simulations, and dispatch telemetry. Official Railway Controller credentials required.
+          </span>
         </div>
 
         {/* Error Alert */}
