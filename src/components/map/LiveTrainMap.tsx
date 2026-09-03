@@ -1,29 +1,19 @@
-﻿import React, { useEffect, useRef, useState, useCallback } from 'react';
+﻿import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { 
-  APIProvider, 
-  Map as GoogleMap, 
-  AdvancedMarker,
-  InfoWindow, 
-  useMap,
-  useMapsLibrary
-} from '@vis.gl/react-google-maps';
-import { TrainData, StationStop } from '../../types';
+import { TrainData } from '../../types';
 import { 
   Gauge, 
   Clock, 
   MapPin, 
   LocateFixed, 
   Maximize2, 
-  Crosshair,
-  Train as TrainIcon,
-  Plus,
-  Minus,
-  Layers,
-  Sparkles,
-  Globe,
-  Map as MapIcon
+  Crosshair, 
+  Train as TrainIcon, 
+  Plus, 
+  Minus, 
+  Layers, 
+  Sparkles 
 } from 'lucide-react';
 import { calculateBearing } from '../../services/trainSimulationEngine';
 
@@ -36,18 +26,9 @@ interface LiveTrainMapProps {
   onSelectStation?: (stationCode: string) => void;
 }
 
-// -------------------------------------------------------------
-// LEAFLET MAP VIEW (CartoDB Voyager / Dark / Satellite)
-// High-performance, zero-friction, always-available live map
-// -------------------------------------------------------------
-const LeafletMapView: React.FC<{
-  train: TrainData;
-  onSelectStation?: (stationCode: string) => void;
-  isFollowTrain: boolean;
-  setIsFollowTrain: (val: boolean) => void;
-  userLocation: { lat: number; lng: number; accuracy: number } | null;
-  mapType: 'streets' | 'dark' | 'satellite';
-}> = ({ train, onSelectStation, isFollowTrain, setIsFollowTrain, userLocation, mapType }) => {
+export type GoogleMapLayerType = 'roadmap' | 'hybrid' | 'terrain';
+
+export const LiveTrainMap: React.FC<LiveTrainMapProps> = ({ train, onSelectStation }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const tileLayerRef = useRef<L.TileLayer | null>(null);
@@ -60,7 +41,13 @@ const LeafletMapView: React.FC<{
   const userMarkerRef = useRef<L.Marker | null>(null);
   const userAccuracyCircleRef = useRef<L.Circle | null>(null);
 
-  // Bearing calculation
+  const [mapLayer, setMapLayer] = useState<GoogleMapLayerType>('roadmap');
+  const [isFollowTrain, setIsFollowTrain] = useState<boolean>(true);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number; accuracy: number } | null>(null);
+  const [isLocating, setIsLocating] = useState(false);
+  const prevTrainIdRef = useRef<string>(train.id);
+
+  // Bearing calculation for rotated train direction nose
   const currentIdx = Math.max(0, Math.min(train.stops.length - 1, train.currentStationIndex));
   const nextIdx = Math.min(train.stops.length - 1, currentIdx + 1);
   const targetStop = train.stops[nextIdx];
@@ -68,29 +55,29 @@ const LeafletMapView: React.FC<{
     ? calculateBearing(train.currentLatitude, train.currentLongitude, targetStop.latitude, targetStop.longitude)
     : 0;
 
-  // Initialize Leaflet Map
+  // Helper to get Google Maps tile URL
+  const getGoogleTileUrl = (type: GoogleMapLayerType) => {
+    const layerCode = type === 'hybrid' ? 'y' : type === 'terrain' ? 'p' : 'm';
+    return `https://mt{s}.google.com/vt/lyrs=${layerCode}&x={x}&y={y}&z={z}&key=${GOOGLE_MAPS_API_KEY}`;
+  };
+
+  // Initialize Map with authentic Google Maps Tile Engine
   useEffect(() => {
     if (!mapContainerRef.current || mapInstanceRef.current) return;
-
-    let tileUrl = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
-    if (mapType === 'dark') {
-      tileUrl = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
-    } else if (mapType === 'satellite') {
-      tileUrl = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
-    }
 
     const map = L.map(mapContainerRef.current, {
       center: [train.currentLatitude, train.currentLongitude],
       zoom: 8,
       zoomControl: false,
       attributionControl: false,
-      maxZoom: 18,
+      maxZoom: 20,
       minZoom: 4,
     });
 
-    const tileLayer = L.tileLayer(tileUrl, {
-      maxZoom: 19,
-      subdomains: 'abcd',
+    const tileLayer = L.tileLayer(getGoogleTileUrl('roadmap'), {
+      maxZoom: 20,
+      subdomains: ['0', '1', '2', '3'],
+      attribution: 'Map data &copy;2026 Google'
     }).addTo(map);
 
     tileLayerRef.current = tileLayer;
@@ -141,17 +128,11 @@ const LeafletMapView: React.FC<{
     };
   }, []);
 
-  // Update tile url when mapType changes
+  // Update tile url when mapLayer changes (Roadmap <-> Hybrid <-> Terrain)
   useEffect(() => {
     if (!tileLayerRef.current) return;
-    let newUrl = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
-    if (mapType === 'dark') {
-      newUrl = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
-    } else if (mapType === 'satellite') {
-      newUrl = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
-    }
-    tileLayerRef.current.setUrl(newUrl);
-  }, [mapType]);
+    tileLayerRef.current.setUrl(getGoogleTileUrl(mapLayer));
+  }, [mapLayer]);
 
   // Update track polylines
   useEffect(() => {
@@ -178,7 +159,7 @@ const LeafletMapView: React.FC<{
     });
   }, [train]);
 
-  // Update station markers
+  // Update Station Waypoint Markers
   useEffect(() => {
     const group = stationMarkersGroupRef.current;
     if (!group) return;
@@ -398,32 +379,14 @@ const LeafletMapView: React.FC<{
     }
   }, [userLocation]);
 
-  return (
-    <div 
-      ref={mapContainerRef} 
-      className="w-full h-full min-h-[300px] sm:min-h-[400px] bg-slate-900"
-    />
-  );
-};
-
-// -------------------------------------------------------------
-// MAIN LIVE TRAIN MAP COMPONENT
-// Dual engine: High performance Leaflet OSM default with Google Maps toggle
-// -------------------------------------------------------------
-export const LiveTrainMap: React.FC<LiveTrainMapProps> = ({ train, onSelectStation }) => {
-  const [mapEngine, setMapEngine] = useState<'leaflet' | 'google'>('leaflet');
-  const [mapType, setMapType] = useState<'streets' | 'dark' | 'satellite'>('streets');
-  const [isFollowTrain, setIsFollowTrain] = useState<boolean>(true);
-  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number; accuracy: number } | null>(null);
-  const [isLocating, setIsLocating] = useState(false);
-
-  // Catch Google Maps auth failure globally to automatically fallback without breaking
+  // Fit route when train changes
   useEffect(() => {
-    (window as any).gm_authFailure = () => {
-      console.warn('Google Maps API authentication failed, auto-falling back to Leaflet OSM engine.');
-      setMapEngine('leaflet');
-    };
-  }, []);
+    if (!mapInstanceRef.current) return;
+    if (prevTrainIdRef.current !== train.id) {
+      prevTrainIdRef.current = train.id;
+      handleFitRoute();
+    }
+  }, [train.id]);
 
   // HTML5 User Geolocation tracking
   useEffect(() => {
@@ -445,16 +408,73 @@ export const LiveTrainMap: React.FC<LiveTrainMapProps> = ({ train, onSelectStati
     return () => navigator.geolocation.clearWatch(watchId);
   }, []);
 
+  // Controls Handlers
+  const handleFitRoute = () => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    setIsFollowTrain(false);
+    const bounds = L.latLngBounds([]);
+    train.stops.forEach(s => bounds.extend([s.latitude, s.longitude]));
+    bounds.extend([train.currentLatitude, train.currentLongitude]);
+    if (userLocation) bounds.extend([userLocation.lat, userLocation.lng]);
+
+    if (bounds.isValid()) {
+      map.fitBounds(bounds, { padding: [50, 50], maxZoom: 12 });
+    }
+  };
+
+  const handleFocusTrain = () => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+    setIsFollowTrain(true);
+    map.setView([train.currentLatitude, train.currentLongitude], 12, { animate: true });
+  };
+
+  const handleLocateUser = () => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+    setIsFollowTrain(false);
+
+    if (userLocation) {
+      map.setView([userLocation.lat, userLocation.lng], 14, { animate: true });
+    } else if (navigator.geolocation) {
+      setIsLocating(true);
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy };
+          setUserLocation(loc);
+          setIsLocating(false);
+          map.setView([loc.lat, loc.lng], 14, { animate: true });
+        },
+        () => setIsLocating(false),
+        { enableHighAccuracy: true }
+      );
+    }
+  };
+
+  const handleZoomIn = () => {
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.zoomIn();
+    }
+  };
+
+  const handleZoomOut = () => {
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.zoomOut();
+    }
+  };
+
   return (
     <div className="relative isolate w-full h-full min-h-[360px] sm:min-h-[460px] bg-surface rounded-2xl sm:rounded-3xl overflow-hidden border border-border shadow-xs flex flex-col text-ink">
-      {/* Top telemetry bar & Quick Status */}
+      {/* Top Telemetry Header Bar */}
       <div className="absolute top-2.5 left-2.5 right-2.5 sm:top-3 sm:left-3 sm:right-3 z-10 flex items-start justify-between gap-2 pointer-events-none">
         <div className="bg-surface/95 backdrop-blur-md text-ink px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-xl sm:rounded-2xl shadow-lg border border-border pointer-events-auto flex items-center gap-2 sm:gap-3 text-[11px] sm:text-xs font-semibold max-w-[calc(100%-48px)] sm:max-w-none overflow-x-auto no-scrollbar">
           <div className="flex items-center gap-1.5 font-mono-code shrink-0">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
             <span className="text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wide flex items-center gap-1">
               <Sparkles className="w-3 h-3 text-emerald-500 inline" />
-              <span>LIVE GPS • {train.trainNumber}</span>
+              <span>GOOGLE MAPS • LIVE TRACKING</span>
             </span>
           </div>
           <div className="h-3 w-px bg-border shrink-0" />
@@ -491,9 +511,7 @@ export const LiveTrainMap: React.FC<LiveTrainMapProps> = ({ train, onSelectStati
 
           <button 
             type="button" 
-            onClick={() => {
-              setIsFollowTrain(true);
-            }} 
+            onClick={handleFocusTrain} 
             title="Focus on Train"
             className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-surface/95 hover:bg-surface-dark text-ink hover:text-accent border border-border flex items-center justify-center cursor-pointer shadow-md transition-colors"
           >
@@ -502,54 +520,59 @@ export const LiveTrainMap: React.FC<LiveTrainMapProps> = ({ train, onSelectStati
 
           <button 
             type="button" 
-            onClick={() => {
-              if (navigator.geolocation) {
-                setIsLocating(true);
-                navigator.geolocation.getCurrentPosition(
-                  (pos) => {
-                    setUserLocation({
-                      lat: pos.coords.latitude,
-                      lng: pos.coords.longitude,
-                      accuracy: pos.coords.accuracy
-                    });
-                    setIsLocating(false);
-                    setIsFollowTrain(false);
-                  },
-                  () => setIsLocating(false),
-                  { enableHighAccuracy: true }
-                );
-              }
-            }} 
+            onClick={handleLocateUser} 
             title="My Location"
             className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-surface/95 hover:bg-surface-dark text-ink hover:text-accent border border-border flex items-center justify-center cursor-pointer shadow-md transition-colors"
           >
             <LocateFixed className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isLocating ? 'animate-spin' : ''}`} />
           </button>
 
+          <button 
+            type="button" 
+            onClick={handleFitRoute} 
+            title="Fit Entire Route"
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-surface/95 hover:bg-surface-dark text-ink hover:text-accent border border-border flex items-center justify-center cursor-pointer shadow-md transition-colors"
+          >
+            <Maximize2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          </button>
+
           <button
             type="button"
             onClick={() => {
-              setMapType(prev => prev === 'streets' ? 'satellite' : prev === 'satellite' ? 'dark' : 'streets');
+              setMapLayer(prev => prev === 'roadmap' ? 'hybrid' : prev === 'hybrid' ? 'terrain' : 'roadmap');
             }}
-            title={`Map Style: ${mapType.toUpperCase()}`}
+            title={`Layer: Google ${mapLayer.toUpperCase()}`}
             className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-surface/95 hover:bg-surface-dark text-ink hover:text-accent border border-border flex items-center justify-center cursor-pointer shadow-md transition-colors font-mono text-[9px] font-bold uppercase"
           >
             <Layers className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </button>
+
+          <div className="flex flex-col rounded-xl overflow-hidden border border-border shadow-md bg-surface/95">
+            <button
+              type="button"
+              onClick={handleZoomIn}
+              title="Zoom In"
+              className="w-8 h-8 sm:w-9 sm:h-8 hover:bg-surface-dark text-ink hover:text-accent flex items-center justify-center cursor-pointer transition-colors border-b border-border/50"
+            >
+              <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={handleZoomOut}
+              title="Zoom Out"
+              className="w-8 h-8 sm:w-9 sm:h-8 hover:bg-surface-dark text-ink hover:text-accent flex items-center justify-center cursor-pointer transition-colors"
+            >
+              <Minus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Map Rendering Container */}
-      <div className="w-full flex-1 z-0 min-h-[300px] sm:min-h-[400px] bg-slate-900">
-        <LeafletMapView
-          train={train}
-          onSelectStation={onSelectStation}
-          isFollowTrain={isFollowTrain}
-          setIsFollowTrain={setIsFollowTrain}
-          userLocation={userLocation}
-          mapType={mapType}
-        />
-      </div>
+      {/* Map Rendering Container (Direct Google Maps Engine) */}
+      <div 
+        ref={mapContainerRef} 
+        className="w-full flex-1 z-0 min-h-[300px] sm:min-h-[400px] bg-slate-900"
+      />
 
       {/* Bottom Telemetry Info Footer */}
       <div className="bg-surface/95 backdrop-blur-md text-ink px-3 sm:px-4 py-2 sm:py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-3 text-xs z-10 border-t border-border">
